@@ -1,10 +1,11 @@
 --[[
-    WIDER HUB v12.1 | NOTA 10 | DELTA EXECUTOR
+    WIDER HUB v13.0 | NOTA 10 | DELTA EXECUTOR
     26/04/2026 | Vermelho + Preto + Cinza
     Anti-Hit | Bypass Dano | Safe Zone TP | Lag Glitch
-    Phantom Event | Fishing | Mining | Easter | **Pickup Event + Atomic Tornado + Coral vs Luke + Admin Abuse + Cyber Craft + Los Hackers**
+    Phantom Event | Fishing | Mining | Easter
     Fly+Farm | Money Farm | 12 Raridades | Anti-BAC
-    **Teleport: Ir/Sair do Buraco**
+    + NOVOS: Pickup Event, Atomic Tornado, Coral vs Luke, Admin Abuse, Cyber Craft, Los Hackers
+    Key: mica_@545647784...Fk
 --]]
 
 -- ============================================================
@@ -19,7 +20,7 @@ local CG  = game:GetService("CoreGui")
 
 local KEY    = "mica_@545647784...Fk"
 local DISC   = "discord.gg/bJjbpmJ4r"
-local VER    = "v12.1"
+local VER    = "v13.0"
 
 -- ============================================================
 -- CORES: VERMELHO + PRETO + CINZA
@@ -173,7 +174,7 @@ local kTitle = lbl(kTop, "WIDER HUB " .. VER, 18, C.br, Enum.Font.GothamBold, 53
 kTitle.Size     = UDim2.new(1, 0, 0, 28)
 kTitle.Position = UDim2.new(0, 0, 0, 8)
 
-local kSub = lbl(kTop, "v12.1 | Nota 10 | 26/04/2026", 9, C.tx, Enum.Font.Gotham, 53)
+local kSub = lbl(kTop, "v13.0 | Nota 10 | 26/04/2026", 9, C.tx, Enum.Font.Gotham, 53)
 kSub.Size     = UDim2.new(1, 0, 0, 14)
 kSub.Position = UDim2.new(0, 0, 0, 36)
 
@@ -785,20 +786,42 @@ local function fSubFarm(on)
 end
 
 -- ============================================================
--- BURACOS DO MAPA (ORIGINAL)
+-- BURACOS DO MAPA (CORRIGIDO COM ANTI-VOID)
 -- ============================================================
 local buraco_Y    = -7
 local buraco_orig = nil
 local buracoConn  = nil
 local noBuraco    = false
+local antiVoidConn = nil
+
+local function initAntiVoid()
+    if antiVoidConn then antiVoidConn:Disconnect() end
+    antiVoidConn = RS.Stepped:Connect(function()
+        local h = getHRP()
+        if h and h.Position.Y < 0 then
+            h.CFrame = CFrame.new(h.Position.X, 5, h.Position.Z)
+            setStat("Anti-Void: evitando queda infinita!", C.am)
+        end
+    end)
+end
 
 local function irParaBuraco()
     if noBuraco then setStat("Ja esta num buraco!", C.am); return end
     local h = getHRP(); if not h then return end
     buraco_orig = h.Position
-    local gapX = h.Position.X + 80
-    h.CFrame = CFrame.new(gapX, buraco_Y, h.Position.Z)
+    -- Busca por uma parte do buraco real
+    local holePart = findObj({"hole", "gap", "void", "transition", "portal", "abyss", "lacuna"})
+    if holePart then
+        tpTo(getPos(holePart))
+        setStat("Teleportado para o buraco real!", C.vd)
+    else
+        -- Fallback: vai para uma posição lateral extrema
+        local gapX = h.Position.X + 80
+        h.CFrame = CFrame.new(gapX, buraco_Y, h.Position.Z)
+        setStat("Teleporte alternativo para o buraco!", C.am)
+    end
     noBuraco = true
+    initAntiVoid()
     if buracoConn then buracoConn:Disconnect() end
     buracoConn = RS.Stepped:Connect(function()
         if not noBuraco then
@@ -815,6 +838,7 @@ end
 local function sairDoBuraco()
     noBuraco = false
     if buracoConn then buracoConn:Disconnect(); buracoConn = nil end
+    if antiVoidConn then antiVoidConn:Disconnect(); antiVoidConn = nil end
     local h = getHRP()
     if h then
         if buraco_orig then
@@ -828,7 +852,7 @@ local function sairDoBuraco()
 end
 
 -- ============================================================
--- METODOS ANTI-HIT, BYPASS, SAFE ZONE, LAG GLITCH (ORIGINAIS)
+-- METODOS DE PROTECAO (ANTI-HIT, BYPASS, SAFE ZONE, LAG GLITCH, FANTASMA)
 -- ============================================================
 local antiHitConn = nil
 local function fAntiHit(on)
@@ -1372,7 +1396,7 @@ local function fAutoPickupCollector(on)
         local h = getHRP(); if not h then return end
         for _, o in pairs(workspace:GetDescendants()) do
             local n = o.Name:lower()
-            if n:find("mole") or n:find("pit") or n:find("pickup") or n:find("hole") then
+            if n:find("mole") or n:find("pit") or n:find("pickup") or n:find("hole") or n:find("burrow") then
                 local pos = getPos(o)
                 if pos and (h.Position - pos).Magnitude < 150 then
                     h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
@@ -1381,12 +1405,12 @@ local function fAutoPickupCollector(on)
             end
         end
     end)
-    setStat("Auto Pickup Collector ON — coletando buracos!", C.vd)
+    setStat("Auto Pickup Collector ON — coletando mole pits!", C.vd)
 end
 
--- ATOMIC TORNADO - Ir ao tornado
+-- ATOMIC TORNADO - Teleportar
 local function irAtomicTornado()
-    local tornado = findObj({"tornado","atomic","atom","storm"})
+    local tornado = findObj({"tornado","atomic","atom","storm","nado"})
     if tornado then
         tpTo(getPos(tornado))
         setStat("Teleportado para o Atomic Tornado!", C.vd)
@@ -1395,37 +1419,36 @@ local function irAtomicTornado()
     end
 end
 
--- ATOMIC TORNADO - Segurar Brainrot automaticamente
+-- ATOMIC TORNADO - Auto segurar Brainrot
 local atomicHolding = false
 local function fAutoHoldBrainrot(on)
     stopLoop("atomichold"); if not on then return end
     loops["atomichold"] = RS.Stepped:Connect(function()
-        local tornado = findObj({"tornado","atomic","atom","storm"})
+        local tornado = findObj({"tornado","atomic","atom","storm","nado"})
         if not tornado then return end
         local h = getHRP()
         if h and (h.Position - getPos(tornado)).Magnitude < 50 then
             if not atomicHolding then
                 atomicHolding = true
-                -- Simula segurar o Brainrot (ativa prompt do tornado)
                 local prompt = tornado:FindFirstChildOfClass("ProximityPrompt")
                 if prompt then fireproximityprompt(prompt) end
-                setStat("Segurando Brainrot no Tornado!", C.am)
-                task.wait(3)
+                setStat("Segurando Brainrot no Atomic Tornado!", C.am)
+                task.wait(3.5)
                 atomicHolding = false
             end
         end
     end)
-    setStat("Auto Hold Brainrot ON!", C.vd)
+    setStat("Auto Hold Brainrot ON — use no evento!", C.vd)
 end
 
--- CORAL VS LUKE EVENT - Coletar Brainrots Coral
+-- CORAL VS LUKE - Coletar Brainrots Coral
 local function fCollectCoral(on)
-    stopLoop("coral"); if not on then return end
-    loops["coral"] = RS.Stepped:Connect(function()
+    stopLoop("coralcollect"); if not on then return end
+    loops["coralcollect"] = RS.Stepped:Connect(function()
         local h = getHRP(); if not h then return end
         for _, o in pairs(workspace:GetDescendants()) do
             local n = o.Name:lower()
-            if n:find("coral") and (n:find("brainrot") or n:find("collect")) then
+            if (n:find("coral") and (n:find("brainrot") or n:find("collect"))) or n:find("coralbrain") then
                 local pos = getPos(o)
                 if pos and (h.Position - pos).Magnitude < 150 then
                     h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
@@ -1434,17 +1457,17 @@ local function fCollectCoral(on)
             end
         end
     end)
-    setStat("Coletando Brainrots Coral...", C.vd)
+    setStat("Auto Coleta Coral ON", C.vd)
 end
 
--- CORAL VS LUKE EVENT - Coletar Brainrots Luke
+-- CORAL VS LUKE - Coletar Brainrots Luke
 local function fCollectLuke(on)
-    stopLoop("luke"); if not on then return end
-    loops["luke"] = RS.Stepped:Connect(function()
+    stopLoop("lukecollect"); if not on then return end
+    loops["lukecollect"] = RS.Stepped:Connect(function()
         local h = getHRP(); if not h then return end
         for _, o in pairs(workspace:GetDescendants()) do
             local n = o.Name:lower()
-            if n:find("luke") and (n:find("brainrot") or n:find("collect")) then
+            if (n:find("luke") and (n:find("brainrot") or n:find("collect"))) or n:find("lukebrain") then
                 local pos = getPos(o)
                 if pos and (h.Position - pos).Magnitude < 150 then
                     h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
@@ -1453,28 +1476,28 @@ local function fCollectLuke(on)
             end
         end
     end)
-    setStat("Coletando Brainrots Luke...", C.vd)
+    setStat("Auto Coleta Luke ON", C.vd)
 end
 
 -- ADMIN ABUSE (Sammy's Base) - Teleport
 local function irAdminAbuse()
-    local abuse = findObj({"sammy","adminabuse","abuse","admin"})
+    local abuse = findObj({"sammy","adminabuse","abuse","admin","sammybase"})
     if abuse then
         tpTo(getPos(abuse))
-        setStat("Teleportado para Admin Abuse!", C.vd)
+        setStat("Teleportado para Admin Abuse (Sammy's Base)!", C.vd)
     else
         setStat("Admin Abuse não encontrado!", C.vm)
     end
 end
 
--- ADMIN ABUSE - Coletar Brainrots Los Hackers
+-- ADMIN ABUSE - Coletar Los Hackers
 local function fCollectLosHackers(on)
-    stopLoop("hackers"); if not on then return end
-    loops["hackers"] = RS.Stepped:Connect(function()
+    stopLoop("loscollect"); if not on then return end
+    loops["loscollect"] = RS.Stepped:Connect(function()
         local h = getHRP(); if not h then return end
         for _, o in pairs(workspace:GetDescendants()) do
             local n = o.Name:lower()
-            if n:find("los") and n:find("hackers") or n:find("hacker") then
+            if n:find("los") and n:find("hackers") or n:find("hacker") or n:find("losbra") then
                 local pos = getPos(o)
                 if pos and (h.Position - pos).Magnitude < 150 then
                     h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
@@ -1483,12 +1506,12 @@ local function fCollectLosHackers(on)
             end
         end
     end)
-    setStat("Coletando Los Hackers...", C.vd)
+    setStat("Auto Coleta Los Hackers ON", C.vd)
 end
 
 -- CYBER CRAFT MACHINE - Teleport
 local function irCyberCraft()
-    local craft = findObj({"cybercraft","craftmachine","cyber"})
+    local craft = findObj({"cybercraft","craftmachine","cyber","cybermachine"})
     if craft then
         tpTo(getPos(craft))
         setStat("Teleportado para Cyber Craft Machine!", C.vd)
@@ -1499,7 +1522,7 @@ end
 
 -- RED CARPET (Sammy's Base) - Teleport
 local function irRedCarpet()
-    local red = findObj({"redcarpet","carpet","sammybase"})
+    local red = findObj({"redcarpet","carpet","sammybasecarpet"})
     if red then
         tpTo(getPos(red))
         setStat("Teleportado para o Red Carpet!", C.vd)
@@ -1510,7 +1533,7 @@ end
 
 -- LOS HACKERS SPAWN - Teleport
 local function irLosHackersSpawn()
-    local spawnLoc = findObj({"loshackers","hackerspawn","hacker"})
+    local spawnLoc = findObj({"loshackers","hackerspawn","hackerspawnpoint"})
     if spawnLoc then
         tpTo(getPos(spawnLoc))
         setStat("Teleportado para Los Hackers Spawn!", C.vd)
@@ -1519,44 +1542,88 @@ local function irLosHackersSpawn()
     end
 end
 
--- EVENTO DE PESCA - Ir ao NPC Vendedor de Varas
+-- VENDEDOR DE VARAS DE PESCA
 local function irFishingVendor()
-    local vendor = findObj({"fishingvendor","vendor","rodvendor"})
+    local vendor = findObj({"fishingvendor","vendor","rodvendor","fishingnpc"})
     if vendor then
         tpTo(getPos(vendor))
-        setStat("Teleportado para Vendedor de Varas!", C.vd)
+        setStat("Teleportado para o Vendedor de Varas de Pesca!", C.vd)
     else
-        setStat("Vendedor não encontrado!", C.vm)
+        setStat("Vendedor de Varas não encontrado!", C.vm)
     end
 end
 
--- EVENTO DE MINERAÇÃO - Ir à Mina
-local function irMiningZone()
-    local mine = findObj({"mine","miningzone","cave","rockzone"})
-    if mine then
-        tpTo(getPos(mine))
-        setStat("Teleportado para a Mina!", C.vd)
-    else
-        setStat("Mina não encontrada!", C.vm)
-    end
-end
-
--- EVENTO DE MINERAÇÃO - Ir ao Vendedor da Picareta
+-- VENDEDOR DA PICARETA
 local function irPickaxeVendor()
-    local vendor = findObj({"pickaxevendor","pickaxe","vendor"})
+    local vendor = findObj({"pickaxevendor","pickaxe","vendor","miningnpc"})
     if vendor then
         tpTo(getPos(vendor))
-        setStat("Teleportado para Vendedor da Picareta!", C.vd)
+        setStat("Teleportado para o Vendedor da Picareta!", C.vd)
     else
-        setStat("Vendedor não encontrado!", C.vm)
+        setStat("Vendedor da Picareta não encontrado!", C.vm)
+    end
+end
+
+-- CORAL VS LUKE EVENT PORTAL
+local function irCoralLukeEvent()
+    local portal = findObj({"coral","luke","luckyevent","coralvsluke"})
+    if portal then
+        tpTo(getPos(portal))
+        setStat("Teleportado para o evento Coral vs Luke!", C.vd)
+    else
+        setStat("Evento Coral vs Luke não encontrado!", C.vm)
+    end
+end
+
+-- AUTO FARM EVENTO ATIVO (GERAL)
+local function autoFarmEventoAtivo()
+    while toggleStates["Auto Farm Evento Ativo"] do
+        local eventZone = findObj({"event","admin_abuse","lucky_block","coral","luke","taco","tomato","atomic","tornado","mole","pickup"})
+        if eventZone then
+            tpTo(getPos(eventZone))
+            task.wait(0.5)
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:lower():find("brainrot") or obj.Name:lower():find("coin") or obj.Name:lower():find("token") then
+                    local pos = getPos(obj)
+                    if pos and (getHRP().Position - pos).Magnitude < 150 then
+                        tpTo(pos)
+                        activateObj(obj)
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+        task.wait(2)
+    end
+end
+
+-- AUTO SPIN WHEEL (ROLETA)
+local function autoSpinWheel()
+    while toggleStates["Auto Spin Wheel"] do
+        local wheel = findObj({"wheel","spinner","roulette","roleta","giratorio"})
+        if wheel then
+            tpTo(getPos(wheel))
+            task.wait(0.5)
+            local prompt = wheel:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                fireproximityprompt(prompt)
+                setStat("Girando a roleta...", C.am)
+                task.wait(2)
+            else
+                local click = wheel:FindFirstChildOfClass("ClickDetector")
+                if click then fireclickdetector(click); task.wait(2) end
+            end
+        else
+            task.wait(5)
+        end
     end
 end
 
 -- ============================================================
--- MONTAR MENU (COM NOVAS ADIÇÕES)
+-- MONTAR MENU (COM TODAS AS PÁGINAS ORIGINAIS + NOVA ABA EVENTOS)
 -- ============================================================
 
--- PAGINA: Protecao (original)
+-- PAGINA: PROTECAO (ORIGINAL)
 addSideBtn("Protecao", "[G]")
 pages["Protecao"] = {}; curPage = "Protecao"
 addSection("Metodo 1 — Anti-Hit (Remove Hitbox da Onda)")
@@ -1592,7 +1659,7 @@ addButton("Resetar Speed", "WalkSpeed 16 + JumpPower 50.", function()
     setStat("Speed resetado", C.vd)
 end)
 
--- PAGINA: Phantom (original)
+-- PAGINA: PHANTOM (ORIGINAL)
 addSideBtn("Phantom", "[PH]")
 pages["Phantom"] = {}; curPage = "Phantom"
 addSection("Phantom Event (a cada hora — a partir de Rare Zone)")
@@ -1618,7 +1685,7 @@ addButton("Ir Phantom Summoner", "Funde brainrots para Divine ou Phantom.", func
     if o then tpTo(getPos(o)) end
 end)
 
--- PAGINA: FlyFarm (original)
+-- PAGINA: FLY FARM (ORIGINAL)
 addSideBtn("FlyFarm", "[FF]")
 pages["FlyFarm"] = {}; curPage = "FlyFarm"
 addSection("Fly + Auto Farm (voa acima dos tsunamis)")
@@ -1630,6 +1697,7 @@ addButton("Ir Fishing Portal", "Vai ao portal do Fishing LTM.", function()
     local o = findObj({"fishing","ltm","fish.*portal"}) or findObj({"machine","portal","event"})
     if o then tpTo(getPos(o)) end
 end)
+addButton("Ir Vendedor de Varas", "Teleporta para o NPC que vende varas de pesca.", irFishingVendor)
 addSection("Mining Event (19/04/2026)")
 addToggle("Auto Mining", "Minera rocks e coleta gemas automaticamente.", fMining)
 addButton("Ir Zona Mining", "Teleporta para zona de mineracao.", function()
@@ -1640,6 +1708,7 @@ addButton("Pegar Picareta", "Vai buscar a picareta do evento.", function()
     local o = findObj({"pickaxe","picareta","hammer"})
     if o then tpTo(getPos(o)); task.wait(0.3); activateObj(o); setStat("Picareta pega!", C.am) end
 end)
+addButton("Ir Vendedor da Picareta", "Teleporta para o NPC que vende picaretas.", irPickaxeVendor)
 addSection("Admin Abuse (Sab 12h EST / Qua 16h EST)")
 addButton("Detectar Evento", "Vai ao evento ativo no mapa.", function()
     local o = findObj({"event","admin","abuse","wacky","phantom","radioactive","frenzy"})
@@ -1647,7 +1716,7 @@ addButton("Detectar Evento", "Vai ao evento ativo no mapa.", function()
     else setStat("Sem evento ativo", C.vm) end
 end)
 
--- PAGINA: SubFarm (original + buracos)
+-- PAGINA: FARM SUBTERRANEO (ORIGINAL + BUracos corrigidos)
 addSideBtn("SubFarm", "[SF]")
 pages["SubFarm"] = {}; curPage = "SubFarm"
 addSection("Farm Subterraneo — personagem em Y=" .. tostring(SUB_Y))
@@ -1668,11 +1737,15 @@ end)
 addButton("Velocidade 5 (Maxima)", "0.03s delay. Maximo. Risco de kick.", function()
     farmSpeed = 5; setStat("Velocidade 5 — Maxima (risco)", C.vm)
 end)
-addSection("Buracos do Mapa (lacunas entre zonas)")
-addButton("Ir para Buraco", "Teleporta para lacuna entre zonas. Flutua em Y=-7 sem cair.", irParaBuraco)
+addSection("Buracos do Mapa (lacunas entre zonas) - CORRIGIDO")
+addButton("Ir para Buraco", "Teleporta para lacuna real com anti-void.", irParaBuraco)
 addButton("Sair do Buraco", "Volta para a superficie do mapa.", sairDoBuraco)
+addButton("Ativar Anti-Void Manual", "Ativa a trava contra quedas infinitas.", function()
+    initAntiVoid()
+    setStat("Anti-Void manual ativado!", C.vd)
+end)
 
--- PAGINA: Brainrots (original + novas raridades)
+-- PAGINA: BRAINROTS (12 raridades + novas)
 addSideBtn("Brainrots", "[B]")
 pages["Brainrots"] = {}; curPage = "Brainrots"
 addSection("Auto Collect — 12 Raridades — coleta e volta pra base")
@@ -1693,7 +1766,7 @@ addToggle("Los Hackers", "Coleta Brainrot Los Hackers (raríssimo, $22.5B).", fu
 addToggle("Brainrot Coral", "Coleta Brainrot do evento Coral vs Luke.", function(on) if on then fCollectCoral(on) end end)
 addToggle("Brainrot Luke", "Coleta Brainrot do evento Luke.", function(on) if on then fCollectLuke(on) end end)
 
--- PAGINA: Voo (original)
+-- PAGINA: VOO (ORIGINAL)
 addSideBtn("Voo", "[F]")
 pages["Voo"] = {}; curPage = "Voo"
 addSection("Voo e Movimento")
@@ -1706,7 +1779,7 @@ addButton("Speed x3",    "WalkSpeed 54.", function() local h=getHum() if h then 
 addButton("Speed Normal","WalkSpeed 16.", function() local h=getHum() if h then h.WalkSpeed=16 end setStat("Normal",C.gz)  end)
 addButton("Jump Boost",  "JumpPower 100.", function() local h=getHum() if h then h.JumpPower=100; h.UseJumpPower=true end setStat("Jump!",C.vd) end)
 
--- PAGINA: Areas (original + novos teleportes)
+-- PAGINA: AREAS (ORIGINAL + novos teleportes)
 addSideBtn("Areas", "[TP]")
 pages["Areas"] = {}; curPage = "Areas"
 addSection("Teleportes — Zonas do Mapa")
@@ -1726,42 +1799,46 @@ addSection("Novos Teleportes (Abril 2026)")
 addButton("Cyber Craft Machine", "", irCyberCraft)
 addButton("Red Carpet (Sammy's Base)", "", irRedCarpet)
 addButton("Los Hackers Spawn", "", irLosHackersSpawn)
+addButton("Admin Abuse (Sammy's Base)", "", irAdminAbuse)
+addButton("Atomic Tornado", "", irAtomicTornado)
+addButton("Coral vs Luke Evento", "", irCoralLukeEvent)
 
--- PAGINA: Eventos (NOVA)
-addSideBtn("Eventos", "[E]")
-pages["Eventos"] = {}; curPage = "Eventos"
-addSection("Pickup Event (Mole Pits) — 25/04/2026")
+-- PAGINA: EVENTOS ABRIL (NOVA)
+addSideBtn("Eventos Abril", "[E]")
+pages["Eventos Abril"] = {}; curPage = "Eventos Abril"
+addSection("Sistemas de Auto Farm para Eventos")
 addToggle("Auto Pickup Coletor", "Coleta automaticamente itens dos buracos (mole pits).", fAutoPickupCollector)
+addToggle("Auto Farm Evento Ativo", "Farma automaticamente o evento que estiver rodando.", function(on)
+    stopLoop("autoFarmEvent")
+    if on then
+        loops["autoFarmEvent"] = RS.Stepped:Connect(autoFarmEventoAtivo)
+    end
+end)
+addToggle("Auto Spin Wheel", "Coleta tokens e gira a roleta automaticamente.", function(on)
+    stopLoop("autoSpin")
+    if on then
+        loops["autoSpin"] = RS.Stepped:Connect(autoSpinWheel)
+    end
+end)
 addSection("Atomic Tornado — 25/04/2026")
 addButton("Ir para Tornado", "Teleporta para o Atomic Tornado.", irAtomicTornado)
-addToggle("Auto Segurar Brainrot", "Segura automaticamente um Brainrot no tornado para aumentar/diminuir tamanho.", fAutoHoldBrainrot)
+addToggle("Auto Segurar Brainrot", "Segura automaticamente um Brainrot no tornado.", fAutoHoldBrainrot)
 addSection("Be a Lucky Block: Coral vs Luke — 24/04/2026")
-addButton("Ir para Evento Coral vs Luke", "Vai ao portal do evento.", function()
-    local o = findObj({"coral","luke","luckyevent"})
-    if o then tpTo(getPos(o)) else setStat("Evento não encontrado", C.vm) end
-end)
+addButton("Ir para Evento Coral vs Luke", "Vai ao portal do evento.", irCoralLukeEvent)
 addToggle("Coletar Brainrots Coral", "Coleta os novos Brainrots do evento Coral.", fCollectCoral)
 addToggle("Coletar Brainrots Luke", "Coleta os novos Brainrots do evento Luke.", fCollectLuke)
-addSection("Admin Abuse (Sammy's Base)")
-addButton("Ir para Base do Sammy", "Teleporta para a Admin Abuse (Sammy's Base).", irAdminAbuse)
+addSection("Admin Abuse (Sammy's Base) — 22/04/2026")
+addButton("Ir para Base do Sammy", "Teleporta para a Admin Abuse.", irAdminAbuse)
 addToggle("Coletar Los Hackers", "Coleta o raro Brainrot Los Hackers ($22.5B).", fCollectLosHackers)
-
--- PAGINA: Farming (NOVA - para Fishing e Mining já existentes, mas adicionamos organização)
-addSideBtn("Farming", "[F2]")
-pages["Farming"] = {}; curPage = "Farming"
-addSection("Evento de Pesca (Fishing LTM)")
-addToggle("Auto Fishing", "Pesca automaticamente.", fFishing)
-addButton("Ir para Zona de Pesca", "Teleporta para o local do evento de pesca.", function()
-    local o = findObj({"fishing","ltm","fish.*portal"})
-    if o then tpTo(getPos(o)) else setStat("Zona de pesca não encontrada", C.vm) end
+addSection("Cyber Craft Machine — 20/04/2026")
+addButton("Ir para Cyber Craft", "Teleporta para a máquina de crafting.", irCyberCraft)
+addSection("Pickup Event (Mole Pits)")
+addButton("Ir para Mole Pits", "Teleporta para a área do evento.", function()
+    local o = findObj({"mole","pit","pickup"})
+    if o then tpTo(getPos(o)) else setStat("Mole Pits não encontrado!", C.vm) end
 end)
-addButton("Ir ao Vendedor de Varas", "Teleporta para o NPC que vende varas de pesca.", irFishingVendor)
-addSection("Evento de Mineração (Mining LTM)")
-addToggle("Auto Mining", "Minera rocks e coleta gemas automaticamente.", fMining)
-addButton("Ir para a Mina", "Teleporta para a zona de mineração.", irMiningZone)
-addButton("Ir ao Vendedor da Picareta", "Teleporta para o NPC que vende picaretas.", irPickaxeVendor)
 
--- PAGINA: Visual (original)
+-- PAGINA: VISUAL (ORIGINAL)
 addSideBtn("Visual", "[V]")
 pages["Visual"] = {}; curPage = "Visual"
 addSection("ESP e Visual")
@@ -1778,7 +1855,7 @@ addButton("Rejoin", "Reconecta ao jogo.", function()
     pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LP) end)
 end)
 
--- PAGINA: Discord (original)
+-- PAGINA: DISCORD (ORIGINAL)
 addSideBtn("Discord", "[WH]")
 pages["Discord"] = {}; curPage = "Discord"
 addSection("Wider Hub " .. VER .. " — Info")
@@ -1855,4 +1932,4 @@ kBox.FocusLost:Connect(function(entered)
 end)
 
 showPage("Protecao")
-print("Wider Hub "..VER.." | 26/04/2026 | Carregado com todas as novidades de Abril!")
+print("Wider Hub "..VER.." | v13.0 | 26/04/2026 | Carregado com todas as novidades de Abril e correções!")
