@@ -1,0 +1,2140 @@
+--[[
+    WIDER HUB v14.0 | NOTA 10 | DELTA EXECUTOR
+    01/05/2026 | Preto + Vermelho + Cinza | SEM EMOJIS
+    ============================================================
+    FUNCIONALIDADES COMPLETAS:
+    - Protecao Avancada (Anti-Hit, Bypass Dano, God Mode, Lag Glitch, Fantasma)
+    - Phantom Event (Orbs, Coins, Shards, Auto Spin)
+    - Auto Farm (Fly+Farm, Money Farm, Subterraneo)
+    - Eventos (Fishing, Mining, Admin Abuse, Pickup, Carnival)
+    - NOVO: Scythe Jungle Event (Forca Infinita, Auto Cut Grass, Priority Collection)
+    - NOVO: Auto Find Secret/Celestial/Divine/Infinity Brainrots
+    - NOVO: Carnival Machine Auto-Play + Showtime Mutation
+    - NOVO: Auto Dupe System (UFO/Money/Arcade Events)
+    - NOVO: Auto Event Coins + Auto Carnival Wheel Spin
+    - Coleta Automatica (11 Raridades com prioridade por peso)
+    - Teleportes para TODAS as Zonas (incluindo Secret e Celestial)
+    - Voo, Noclip, Infinite Jump, Speed Control
+    - Visual e ESP
+    ============================================================
+    ANTI-DETECCAO ATIVO | BYPASS BAC ATIVO
+    Key: mica_@545647784...Fk
+--]]
+
+-- ============================================================
+-- SERVICOS E DEFINICOES GLOBAIS
+-- ============================================================
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TweenService")
+local LT = game:GetService("Lighting")
+local CG = game:GetService("CoreGui")
+local TP = game:GetService("TeleportService")
+local RC = game:GetService("ReplicatedStorage")
+local WS = game:GetService("Workspace")
+local HC = game:GetService("HttpService")
+local VIM = game:GetService("VirtualInputManager")
+
+local KEY = "mica_@545647784...Fk"
+local DISC = "discord.gg/bJjbpmJ4r"
+local VER = "v14.0"
+
+-- ============================================================
+-- CORES (VISUAL LIMPO - SEM EMOJIS)
+-- ============================================================
+local C = {
+    bg = Color3.fromRGB(8, 8, 12),
+    sb = Color3.fromRGB(15, 15, 20),
+    ct = Color3.fromRGB(12, 12, 18),
+    hd = Color3.fromRGB(4, 4, 6),
+    rx = Color3.fromRGB(180, 0, 0),
+    rxe = Color3.fromRGB(110, 0, 0),
+    rx2 = Color3.fromRGB(220, 30, 30),
+    gz = Color3.fromRGB(60, 60, 70),
+    gz2 = Color3.fromRGB(35, 35, 45),
+    dt = Color3.fromRGB(200, 20, 20),
+    vd = Color3.fromRGB(50, 200, 70),
+    vm = Color3.fromRGB(210, 50, 50),
+    am = Color3.fromRGB(255, 180, 30),
+    tx = Color3.fromRGB(220, 210, 210),
+    txs = Color3.fromRGB(130, 120, 130),
+    br = Color3.new(1, 1, 1),
+    sel = Color3.fromRGB(35, 8, 8),
+    div = Color3.fromRGB(40, 20, 20),
+}
+
+-- ============================================================
+-- LIMPEZA INICIAL
+-- ============================================================
+pcall(function() CG:FindFirstChild("WiderHub"):Destroy() end)
+pcall(function() LP.PlayerGui:FindFirstChild("WiderHub"):Destroy() end)
+
+-- ============================================================
+-- SCREEN GUI PRINCIPAL
+-- ============================================================
+local SG = Instance.new("ScreenGui")
+SG.Name = "WiderHub"
+SG.ResetOnSpawn = false
+SG.IgnoreGuiInset = true
+SG.DisplayOrder = 999
+pcall(function() SG.Parent = CG end)
+if not SG.Parent then SG.Parent = LP.PlayerGui end
+
+-- ============================================================
+-- FUNCOES UI (OTIMIZADAS)
+-- ============================================================
+local function cr(f, r)
+    local corner = Instance.new("UICorner", f)
+    corner.CornerRadius = UDim.new(0, r or 6)
+end
+local function gr(f, a, b)
+    local g = Instance.new("UIGradient", f)
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, a),
+        ColorSequenceKeypoint.new(1, b)
+    })
+end
+local function mk(f, col, th)
+    local s = Instance.new("UIStroke", f)
+    s.Color = col
+    s.Thickness = th or 1.5
+    return s
+end
+local function lbl(p, t, ts, col, fn, zi)
+    local l = Instance.new("TextLabel", p)
+    l.BackgroundTransparency = 1
+    l.Text = t
+    l.TextSize = ts or 11
+    l.TextColor3 = col or C.br
+    l.Font = fn or Enum.Font.Gotham
+    l.ZIndex = zi or 13
+    return l
+end
+
+-- ============================================================
+-- FUNCOES JOGO (COM ANTI-BAN)
+-- ============================================================
+local function getChar()
+    return LP.Character
+end
+local function getHRP()
+    local c = getChar()
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+local function getHum()
+    local c = getChar()
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+local function getPos(o)
+    if not o then return nil end
+    if o:IsA("Model") and o.PrimaryPart then
+        return o.PrimaryPart.Position
+    elseif o:IsA("BasePart") then
+        return o.Position
+    end
+end
+local function tpTo(pos)
+    local h = getHRP()
+    if h and pos then
+        h.CFrame = CFrame.new(pos + Vector3.new(0, 4, 0))
+    end
+end
+local function findObj(kws)
+    for _, o in pairs(WS:GetDescendants()) do
+        local n = o.Name:lower()
+        for _, k in pairs(kws) do
+            if n:find(k) then
+                return o
+            end
+        end
+    end
+end
+local function activateObj(o)
+    if not o then return end
+    pcall(function()
+        local pp = o:FindFirstChildOfClass("ProximityPrompt") or (o.Parent and o.Parent:FindFirstChildOfClass("ProximityPrompt"))
+        if pp then
+            fireproximityprompt(pp)
+        end
+    end)
+    pcall(function()
+        if o:IsA("BasePart") then
+            local cd = o:FindFirstChildOfClass("ClickDetector")
+            if cd then
+                fireclickdetector(cd)
+            end
+        end
+    end)
+end
+
+local loops = {}
+local function stopLoop(name)
+    if loops[name] then
+        loops[name]:Disconnect()
+        loops[name] = nil
+    end
+end
+
+local toggleStates = {}
+local allSearchItems = {}
+local setStat
+local pages = {}
+local curPage = ""
+local sideButtons = {}
+local menuOpen = false
+
+-- ============================================================
+-- TELA DE KEY (SEGURANCA)
+-- ============================================================
+local KBG = Instance.new("Frame", SG)
+KBG.Size = UDim2.new(1, 0, 1, 0)
+KBG.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+KBG.BorderSizePixel = 0
+KBG.ZIndex = 50
+
+local KP = Instance.new("Frame", KBG)
+KP.Size = UDim2.new(0, 270, 0, 280)
+KP.Position = UDim2.new(0.5, -135, 0.5, -160)
+KP.BackgroundColor3 = C.sb
+KP.BorderSizePixel = 0
+KP.ZIndex = 51
+cr(KP, 12)
+mk(KP, C.dt, 2)
+
+local kTop = Instance.new("Frame", KP)
+kTop.Size = UDim2.new(1, 0, 0, 54)
+kTop.BackgroundColor3 = C.rx
+kTop.BorderSizePixel = 0
+kTop.ZIndex = 52
+cr(kTop, 12)
+gr(kTop, C.rx2, C.rxe)
+
+local kTopFix = Instance.new("Frame", KP)
+kTopFix.Size = UDim2.new(1, 0, 0, 12)
+kTopFix.Position = UDim2.new(0, 0, 0, 44)
+kTopFix.BackgroundColor3 = C.rx
+kTopFix.BorderSizePixel = 0
+kTopFix.ZIndex = 52
+
+local kTitle = lbl(kTop, "WIDER HUB " .. VER, 18, C.br, Enum.Font.GothamBold, 53)
+kTitle.Size = UDim2.new(1, 0, 0, 28)
+kTitle.Position = UDim2.new(0, 0, 0, 8)
+
+local kSub = lbl(kTop, "v14.0 | Nota 10 | 01/05/2026", 9, C.tx, Enum.Font.Gotham, 53)
+kSub.Size = UDim2.new(1, 0, 0, 14)
+kSub.Position = UDim2.new(0, 0, 0, 36)
+
+lbl(KP, "Insira sua Key para acessar", 10, C.tx, Enum.Font.Gotham, 52).Size = UDim2.new(1, -16, 0, 18)
+local kInfoLbl = KP:FindFirstChildOfClass("TextLabel")
+kInfoLbl.Position = UDim2.new(0, 8, 0, 64)
+
+local kBox = Instance.new("TextBox", KP)
+kBox.Size = UDim2.new(1, -16, 0, 34)
+kBox.Position = UDim2.new(0, 8, 0, 84)
+kBox.BackgroundColor3 = C.hd
+kBox.Text = ""
+kBox.PlaceholderText = "Cole sua key aqui..."
+kBox.TextColor3 = C.br
+kBox.PlaceholderColor3 = C.txs
+kBox.TextSize = 12
+kBox.Font = Enum.Font.Gotham
+kBox.BorderSizePixel = 0
+kBox.ClearTextOnFocus = false
+kBox.ZIndex = 53
+cr(kBox, 7)
+local kBoxStroke = mk(kBox, C.rxe, 1.5)
+kBox:GetPropertyChangedSignal("Text"):Connect(function()
+    kBoxStroke.Color = #kBox.Text > 0 and C.dt or C.rxe
+end)
+
+local kConfBtn = Instance.new("TextButton", KP)
+kConfBtn.Size = UDim2.new(1, -16, 0, 34)
+kConfBtn.Position = UDim2.new(0, 8, 0, 124)
+kConfBtn.BackgroundColor3 = C.rx
+kConfBtn.Text = "CONFIRMAR KEY"
+kConfBtn.TextColor3 = C.br
+kConfBtn.TextSize = 13
+kConfBtn.Font = Enum.Font.GothamBold
+kConfBtn.BorderSizePixel = 0
+kConfBtn.ZIndex = 53
+cr(kConfBtn, 7)
+gr(kConfBtn, C.rx2, C.rxe)
+
+local kDiscBtn = Instance.new("TextButton", KP)
+kDiscBtn.Size = UDim2.new(1, -16, 0, 28)
+kDiscBtn.Position = UDim2.new(0, 8, 0, 164)
+kDiscBtn.BackgroundColor3 = C.gz
+kDiscBtn.Text = "COPIAR DISCORD"
+kDiscBtn.TextColor3 = C.br
+kDiscBtn.TextSize = 11
+kDiscBtn.Font = Enum.Font.GothamBold
+kDiscBtn.BorderSizePixel = 0
+kDiscBtn.ZIndex = 53
+cr(kDiscBtn, 7)
+
+local kMsg = Instance.new("TextLabel", KP)
+kMsg.Size = UDim2.new(1, -16, 0, 30)
+kMsg.Position = UDim2.new(0, 8, 0, 198)
+kMsg.BackgroundTransparency = 1
+kMsg.Text = ""
+kMsg.TextColor3 = C.vm
+kMsg.TextSize = 10
+kMsg.Font = Enum.Font.GothamBold
+kMsg.TextWrapped = true
+kMsg.ZIndex = 52
+
+local kDiscInfo = lbl(KP, DISC, 9, C.txs, Enum.Font.Gotham, 52)
+kDiscInfo.Size = UDim2.new(1, 0, 0, 14)
+kDiscInfo.Position = UDim2.new(0, 0, 0, 244)
+
+kDiscBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        setclipboard("https://" .. DISC)
+    end)
+    kDiscBtn.Text = "COPIADO!"
+    task.delay(2, function()
+        kDiscBtn.Text = "COPIAR DISCORD"
+    end)
+end)
+
+KBG.BackgroundTransparency = 1
+TS:Create(KBG, TweenInfo.new(0.35), {
+    BackgroundTransparency = 0.4
+}):Play()
+TS:Create(KP, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Position = UDim2.new(0.5, -135, 0.5, -140)
+}):Play()
+
+-- ============================================================
+-- BOTAO FLUTUANTE (arrastavel)
+-- ============================================================
+local FAB = Instance.new("Frame", SG)
+FAB.Size = UDim2.new(0, 48, 0, 48)
+FAB.Position = UDim2.new(0, 10, 0.5, -24)
+FAB.BackgroundTransparency = 1
+FAB.ZIndex = 20
+FAB.Visible = false
+
+local FBTN = Instance.new("TextButton", FAB)
+FBTN.Size = UDim2.new(1, 0, 1, 0)
+FBTN.BackgroundColor3 = C.rx
+FBTN.Text = "W"
+FBTN.TextSize = 19
+FBTN.Font = Enum.Font.GothamBold
+FBTN.TextColor3 = C.br
+FBTN.BorderSizePixel = 0
+FBTN.ZIndex = 21
+cr(FBTN, 24)
+mk(FBTN, C.dt, 2)
+gr(FBTN, C.rx2, C.rxe)
+
+local fabDrag, fabDragStart, fabStartPos, fabMoved = false, nil, nil, false
+FBTN.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        fabDrag = true
+        fabMoved = false
+        fabDragStart = i.Position
+        fabStartPos = FAB.Position
+    end
+end)
+FBTN.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        fabDrag = false
+    end
+end)
+UIS.InputChanged:Connect(function(i)
+    if fabDrag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - fabDragStart
+        if d.Magnitude > 5 then
+            fabMoved = true
+        end
+        FAB.Position = UDim2.new(fabStartPos.X.Scale, fabStartPos.X.Offset + d.X, fabStartPos.Y.Scale, fabStartPos.Y.Offset + d.Y)
+    end
+end)
+
+-- ============================================================
+-- MENU PRINCIPAL
+-- ============================================================
+local Menu = Instance.new("Frame", SG)
+Menu.Size = UDim2.new(0, 370, 0, 420)
+Menu.Position = UDim2.new(0.5, -185, 0.5, -210)
+Menu.BackgroundColor3 = C.bg
+Menu.BorderSizePixel = 0
+Menu.ClipsDescendants = true
+Menu.Visible = false
+Menu.ZIndex = 10
+cr(Menu, 10)
+mk(Menu, C.dt, 1.5)
+
+local mTop = Instance.new("Frame", Menu)
+mTop.Size = UDim2.new(1, 0, 0, 36)
+mTop.BackgroundColor3 = C.hd
+mTop.BorderSizePixel = 0
+mTop.ZIndex = 11
+cr(mTop, 10)
+gr(mTop, C.rxe, C.hd)
+
+local mTopFix = Instance.new("Frame", Menu)
+mTopFix.Size = UDim2.new(1, 0, 0, 10)
+mTopFix.Position = UDim2.new(0, 0, 0, 28)
+mTopFix.BackgroundColor3 = C.hd
+mTopFix.BorderSizePixel = 0
+mTopFix.ZIndex = 11
+
+local mTitle = lbl(mTop, "WIDER HUB " .. VER .. " | 01/05/2026", 11, C.br, Enum.Font.GothamBold, 12)
+mTitle.Size = UDim2.new(1, -80, 1, 0)
+mTitle.Position = UDim2.new(0, 10, 0, 0)
+mTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local mMinBtn = Instance.new("TextButton", mTop)
+mMinBtn.Size = UDim2.new(0, 24, 0, 18)
+mMinBtn.Position = UDim2.new(1, -56, 0.5, -9)
+mMinBtn.BackgroundColor3 = C.gz2
+mMinBtn.Text = "-"
+mMinBtn.TextColor3 = C.br
+mMinBtn.TextSize = 14
+mMinBtn.Font = Enum.Font.GothamBold
+mMinBtn.BorderSizePixel = 0
+mMinBtn.ZIndex = 12
+cr(mMinBtn, 5)
+
+local mClsBtn = Instance.new("TextButton", mTop)
+mClsBtn.Size = UDim2.new(0, 24, 0, 18)
+mClsBtn.Position = UDim2.new(1, -28, 0.5, -9)
+mClsBtn.BackgroundColor3 = C.rx
+mClsBtn.Text = "X"
+mClsBtn.TextColor3 = C.br
+mClsBtn.TextSize = 10
+mClsBtn.Font = Enum.Font.GothamBold
+mClsBtn.BorderSizePixel = 0
+mClsBtn.ZIndex = 12
+cr(mClsBtn, 5)
+
+local minimized = false
+mMinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    Menu.Size = minimized and UDim2.new(0, 370, 0, 36) or UDim2.new(0, 370, 0, 420)
+end)
+mClsBtn.MouseButton1Click:Connect(function()
+    menuOpen = false
+    Menu.Visible = false
+end)
+
+local mDrag, mDragStart, mStartPos = false, nil, nil
+mTop.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        mDrag = true
+        mDragStart = i.Position
+        mStartPos = Menu.Position
+    end
+end)
+mTop.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        mDrag = false
+    end
+end)
+UIS.InputChanged:Connect(function(i)
+    if mDrag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - mDragStart
+        Menu.Position = UDim2.new(mStartPos.X.Scale, mStartPos.X.Offset + d.X, mStartPos.Y.Scale, mStartPos.Y.Offset + d.Y)
+    end
+end)
+
+-- ============================================================
+-- BARRA DE PESQUISA
+-- ============================================================
+local SearchBar = Instance.new("Frame", Menu)
+SearchBar.Size = UDim2.new(1, -96, 0, 26)
+SearchBar.Position = UDim2.new(0, 93, 0, 38)
+SearchBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+SearchBar.BorderSizePixel = 0
+SearchBar.ZIndex = 12
+cr(SearchBar, 7)
+mk(SearchBar, C.rxe, 1)
+
+local srchIcon = lbl(SearchBar, "?", 10, C.txs, Enum.Font.GothamBold, 13)
+srchIcon.Size = UDim2.new(0, 20, 1, 0)
+srchIcon.Position = UDim2.new(0, 2, 0, 0)
+
+local srchBox = Instance.new("TextBox", SearchBar)
+srchBox.Size = UDim2.new(1, -24, 1, 0)
+srchBox.Position = UDim2.new(0, 22, 0, 0)
+srchBox.BackgroundTransparency = 1
+srchBox.Text = ""
+srchBox.PlaceholderText = "Pesquisar opcao..."
+srchBox.TextColor3 = C.br
+srchBox.PlaceholderColor3 = C.txs
+srchBox.TextSize = 9
+srchBox.Font = Enum.Font.Gotham
+srchBox.BorderSizePixel = 0
+srchBox.ClearTextOnFocus = false
+srchBox.ZIndex = 13
+
+srchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local q = srchBox.Text:lower():gsub("%s", "")
+    if #q == 0 then
+        if curPage ~= "" then
+            showPage(curPage)
+        end
+        return
+    end
+    for _, ch in pairs(ContentScroll:GetChildren()) do
+        if ch:IsA("GuiObject") and ch ~= ContentLayout then
+            ch:Destroy()
+        end
+    end
+    for _, item in pairs(allSearchItems) do
+        local n = (item.name or ""):lower():gsub("%s", "")
+        local d = (item.desc or ""):lower():gsub("%s", "")
+        if n:find(q) or d:find(q) then
+            item.fn()
+        end
+    end
+    for _, b in pairs(sideButtons) do
+        b.BackgroundTransparency = 1
+    end
+end)
+
+-- ============================================================
+-- SIDEBAR
+-- ============================================================
+local Sidebar = Instance.new("Frame", Menu)
+Sidebar.Size = UDim2.new(0, 90, 1, -36)
+Sidebar.Position = UDim2.new(0, 0, 0, 36)
+Sidebar.BackgroundColor3 = C.sb
+Sidebar.BorderSizePixel = 0
+Sidebar.ZIndex = 11
+
+local SideDiv = Instance.new("Frame", Menu)
+SideDiv.Size = UDim2.new(0, 1, 1, -36)
+SideDiv.Position = UDim2.new(0, 90, 0, 36)
+SideDiv.BackgroundColor3 = C.dt
+SideDiv.BorderSizePixel = 0
+SideDiv.ZIndex = 12
+
+local ContentArea = Instance.new("Frame", Menu)
+ContentArea.Size = UDim2.new(1, -91, 1, -68)
+ContentArea.Position = UDim2.new(0, 91, 0, 68)
+ContentArea.BackgroundColor3 = C.ct
+ContentArea.BorderSizePixel = 0
+ContentArea.ClipsDescendants = true
+ContentArea.ZIndex = 11
+
+local StatusBar = Instance.new("Frame", ContentArea)
+StatusBar.Size = UDim2.new(1, 0, 0, 22)
+StatusBar.BackgroundColor3 = C.hd
+StatusBar.BorderSizePixel = 0
+StatusBar.ZIndex = 12
+
+local StatusLbl = lbl(StatusBar, "Wider Hub pronto!", 9, C.vd, Enum.Font.Gotham, 13)
+StatusLbl.Size = UDim2.new(1, -8, 1, 0)
+StatusLbl.Position = UDim2.new(0, 6, 0, 0)
+StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+setStat = function(text, col)
+    StatusLbl.Text = text
+    StatusLbl.TextColor3 = col or C.vd
+end
+
+local ContentScroll = Instance.new("ScrollingFrame", ContentArea)
+ContentScroll.Size = UDim2.new(1, 0, 1, -22)
+ContentScroll.Position = UDim2.new(0, 0, 0, 22)
+ContentScroll.BackgroundTransparency = 1
+ContentScroll.BorderSizePixel = 0
+ContentScroll.ScrollBarThickness = 3
+ContentScroll.ScrollBarImageColor3 = C.dt
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ContentScroll.ZIndex = 12
+
+local ContentLayout = Instance.new("UIListLayout", ContentScroll)
+ContentLayout.Padding = UDim.new(0, 2)
+ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentScroll.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 8)
+end)
+
+local SideScroll = Instance.new("ScrollingFrame", Sidebar)
+SideScroll.Size = UDim2.new(1, 0, 1, 0)
+SideScroll.BackgroundTransparency = 1
+SideScroll.BorderSizePixel = 0
+SideScroll.ScrollBarThickness = 2
+SideScroll.ScrollBarImageColor3 = C.dt
+SideScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+SideScroll.ZIndex = 12
+
+local SideLayout = Instance.new("UIListLayout", SideScroll)
+SideLayout.Padding = UDim.new(0, 1)
+SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+SideLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    SideScroll.CanvasSize = UDim2.new(0, 0, 0, SideLayout.AbsoluteContentSize.Y + 4)
+end)
+
+-- ============================================================
+-- SISTEMA DE PAGINAS
+-- ============================================================
+local function showPage(name)
+    for _, ch in pairs(ContentScroll:GetChildren()) do
+        if ch:IsA("GuiObject") and ch ~= ContentLayout then
+            ch:Destroy()
+        end
+    end
+    for k, b in pairs(sideButtons) do
+        if k == name then
+            b.BackgroundColor3 = C.sel
+            b.BackgroundTransparency = 0
+        else
+            b.BackgroundTransparency = 1
+        end
+    end
+    curPage = name
+    if pages[name] then
+        for _, fn in pairs(pages[name]) do
+            fn()
+        end
+    end
+end
+
+local function addSideBtn(name, icon)
+    local btn = Instance.new("TextButton", SideScroll)
+    btn.Size = UDim2.new(1, 0, 0, 44)
+    btn.BackgroundColor3 = C.sb
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.BorderSizePixel = 0
+    btn.ZIndex = 13
+
+    local indicator = Instance.new("Frame", btn)
+    indicator.Size = UDim2.new(0, 3, 0.6, 0)
+    indicator.Position = UDim2.new(0, 0, 0.2, 0)
+    indicator.BackgroundColor3 = C.dt
+    indicator.BorderSizePixel = 0
+    indicator.Visible = false
+    indicator.ZIndex = 14
+    cr(indicator, 2)
+
+    local iconLbl = lbl(btn, icon, 12, C.tx, Enum.Font.GothamBold, 14)
+    iconLbl.Size = UDim2.new(1, 0, 0, 20)
+    iconLbl.Position = UDim2.new(0, 0, 0, 5)
+
+    local nameLbl = lbl(btn, name, 8, C.txs, Enum.Font.Gotham, 14)
+    nameLbl.Size = UDim2.new(1, -2, 0, 16)
+    nameLbl.Position = UDim2.new(0, 2, 0, 24)
+    nameLbl.TextWrapped = true
+
+    sideButtons[name] = btn
+    btn.MouseButton1Click:Connect(function()
+        showPage(name)
+        indicator.Visible = true
+        iconLbl.TextColor3 = C.br
+        nameLbl.TextColor3 = C.tx
+        for k2, b2 in pairs(sideButtons) do
+            if k2 ~= name then
+                local ind2 = b2:FindFirstChildOfClass("Frame")
+                if ind2 then
+                    ind2.Visible = false
+                end
+            end
+        end
+    end)
+end
+
+local function addSection(title)
+    pages[curPage][#pages[curPage] + 1] = function()
+        local f = Instance.new("Frame", ContentScroll)
+        f.Size = UDim2.new(1, 0, 0, 24)
+        f.BackgroundColor3 = C.rxe
+        f.BorderSizePixel = 0
+        f.ZIndex = 13
+        gr(f, C.rxe, C.ct)
+        local l = lbl(f, title, 10, C.br, Enum.Font.GothamBold, 14)
+        l.Size = UDim2.new(1, -8, 1, 0)
+        l.Position = UDim2.new(0, 6, 0, 0)
+        l.TextXAlignment = Enum.TextXAlignment.Left
+    end
+end
+
+local function addToggle(name, desc, callback)
+    toggleStates[name] = false
+    local function renderFn()
+        local f = Instance.new("Frame", ContentScroll)
+        f.Size = UDim2.new(1, 0, 0, 50)
+        f.BackgroundTransparency = 1
+        f.BorderSizePixel = 0
+        f.ZIndex = 13
+
+        local divLine = Instance.new("Frame", f)
+        divLine.Size = UDim2.new(1, -12, 0, 1)
+        divLine.Position = UDim2.new(0, 6, 1, -1)
+        divLine.BackgroundColor3 = C.div
+        divLine.BorderSizePixel = 0
+        divLine.ZIndex = 14
+
+        local nameLbl = lbl(f, name, 11, C.br, Enum.Font.GothamBold, 14)
+        nameLbl.Size = UDim2.new(1, -52, 0, 18)
+        nameLbl.Position = UDim2.new(0, 8, 0, 6)
+        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+        local descLbl = lbl(f, desc or "", 8, C.txs, Enum.Font.Gotham, 14)
+        descLbl.Size = UDim2.new(1, -52, 0, 20)
+        descLbl.Position = UDim2.new(0, 8, 0, 24)
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.TextWrapped = true
+
+        local pill = Instance.new("TextButton", f)
+        pill.Size = UDim2.new(0, 40, 0, 20)
+        pill.Position = UDim2.new(1, -46, 0.5, -10)
+        pill.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        pill.Text = ""
+        pill.BorderSizePixel = 0
+        pill.ZIndex = 14
+        cr(pill, 10)
+
+        local knob = Instance.new("Frame", pill)
+        knob.Size = UDim2.new(0, 16, 0, 16)
+        knob.Position = UDim2.new(0, 2, 0.5, -8)
+        knob.BackgroundColor3 = C.gz2
+        knob.BorderSizePixel = 0
+        knob.ZIndex = 15
+        cr(knob, 8)
+
+        pill.MouseButton1Click:Connect(function()
+            toggleStates[name] = not toggleStates[name]
+            if toggleStates[name] then
+                pill.BackgroundColor3 = C.dt
+                TS:Create(knob, TweenInfo.new(0.15), {
+                    Position = UDim2.new(1, -18, 0.5, -8),
+                    BackgroundColor3 = C.br
+                }):Play()
+                setStat(name .. " ON", C.vd)
+            else
+                pill.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+                TS:Create(knob, TweenInfo.new(0.15), {
+                    Position = UDim2.new(0, 2, 0.5, -8),
+                    BackgroundColor3 = C.gz2
+                }):Play()
+                setStat(name .. " OFF", C.vm)
+            end
+            if callback then
+                pcall(callback, toggleStates[name])
+            end
+        end)
+    end
+    pages[curPage][#pages[curPage] + 1] = renderFn
+    allSearchItems[#allSearchItems + 1] = {
+        name = name,
+        desc = desc,
+        fn = renderFn
+    }
+end
+
+local function addButton(name, desc, callback)
+    local function renderFn()
+        local f = Instance.new("Frame", ContentScroll)
+        f.Size = UDim2.new(1, 0, 0, 50)
+        f.BackgroundTransparency = 1
+        f.BorderSizePixel = 0
+        f.ZIndex = 13
+
+        local divLine = Instance.new("Frame", f)
+        divLine.Size = UDim2.new(1, -12, 0, 1)
+        divLine.Position = UDim2.new(0, 6, 1, -1)
+        divLine.BackgroundColor3 = C.div
+        divLine.BorderSizePixel = 0
+        divLine.ZIndex = 14
+
+        local btn = Instance.new("TextButton", f)
+        btn.Size = UDim2.new(1, 0, 1, 0)
+        btn.BackgroundTransparency = 1
+        btn.Text = ""
+        btn.BorderSizePixel = 0
+        btn.ZIndex = 14
+
+        local nameLbl = lbl(btn, name, 11, C.br, Enum.Font.GothamBold, 15)
+        nameLbl.Size = UDim2.new(1, -36, 0, 18)
+        nameLbl.Position = UDim2.new(0, 8, 0, 6)
+        nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+        local descLbl = lbl(btn, desc or "", 8, C.txs, Enum.Font.Gotham, 15)
+        descLbl.Size = UDim2.new(1, -36, 0, 20)
+        descLbl.Position = UDim2.new(0, 8, 0, 24)
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.TextWrapped = true
+
+        local arrow = lbl(btn, ">", 13, C.dt, Enum.Font.GothamBold, 15)
+        arrow.Size = UDim2.new(0, 20, 0, 20)
+        arrow.Position = UDim2.new(1, -26, 0.5, -10)
+
+        btn.MouseButton1Click:Connect(function()
+            setStat("Executando: " .. name, C.am)
+            f.BackgroundTransparency = 0
+            f.BackgroundColor3 = C.sel
+            task.delay(0.12, function()
+                f.BackgroundTransparency = 1
+            end)
+            if callback then
+                pcall(callback)
+            end
+        end)
+    end
+    pages[curPage][#pages[curPage] + 1] = renderFn
+    allSearchItems[#allSearchItems + 1] = {
+        name = name,
+        desc = desc,
+        fn = renderFn
+    }
+end
+
+-- ============================================================
+-- FUNCOES DO JOGO (ORIGINAIS + NOVAS)
+-- ============================================================
+
+-- ============================================================
+-- FARM SUBTERRANEO (ORIGINAL)
+-- ============================================================
+local subFarmConn = nil
+local SUB_Y = -7
+local farmSpeed = 2
+local SPEED_TABLE = {0.4, 0.2, 0.1, 0.06, 0.03}
+
+local function fSubFarm(on)
+    if subFarmConn then subFarmConn:Disconnect(); subFarmConn = nil end
+    if not on then setStat("Farm Subterraneo OFF", C.vm); return end
+    local farmKws = {
+        "brainrot","common","uncommon","rare","epic","legendary","mythic",
+        "cosmic","secret","celestial","divine","infinity","paradox",
+        "phantom","orb","coin","shard","egg","spring","golden",
+        "lucky","block","fish","ore","gem","crystal"
+    }
+    local collecting = false
+    subFarmConn = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        if collecting then return end
+        if math.abs(h.Position.Y - SUB_Y) > 1.5 then
+            pcall(function() h.CFrame = CFrame.new(h.Position.X, SUB_Y, h.Position.Z) end)
+        end
+        local bestItem, bestDist = nil, 200
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            for _, k in pairs(farmKws) do
+                if n:find(k) then
+                    local pos = getPos(o)
+                    if pos then
+                        local xzDist = Vector2.new(h.Position.X - pos.X, h.Position.Z - pos.Z).Magnitude
+                        if xzDist < bestDist then bestDist = xzDist; bestItem = {o=o, p=pos} end
+                    end; break
+                end
+            end
+        end
+        if bestItem then
+            collecting = true
+            spawn(function()
+                local delay = SPEED_TABLE[farmSpeed] or 0.2
+                local h2 = getHRP(); if not h2 then collecting=false; return end
+                h2.CFrame = CFrame.new(bestItem.p.X, SUB_Y, bestItem.p.Z)
+                task.wait(delay)
+                local h3 = getHRP(); if not h3 then collecting=false; return end
+                h3.CFrame = CFrame.new(bestItem.p.X, 4, bestItem.p.Z)
+                task.wait(delay * 0.5); activateObj(bestItem.o)
+                task.wait(delay * 0.3)
+                local h4 = getHRP(); if not h4 then collecting=false; return end
+                h4.CFrame = CFrame.new(bestItem.p.X, SUB_Y, bestItem.p.Z)
+                task.wait(delay)
+                local base = findObj({"base","plot","spawn","homebase"})
+                local bp = getPos(base)
+                local h5 = getHRP()
+                if h5 and bp then
+                    h5.CFrame = CFrame.new(bp.X, SUB_Y, bp.Z)
+                    task.wait(delay * 0.5)
+                    local h6 = getHRP()
+                    if h6 then h6.CFrame = CFrame.new(bp.X, 4, bp.Z) end
+                    task.wait(delay * 0.3); activateObj(base)
+                    task.wait(delay * 0.3)
+                    local h7 = getHRP()
+                    if h7 then h7.CFrame = CFrame.new(bp.X, SUB_Y, bp.Z) end
+                end
+                setStat("Coletado! Velocidade: "..farmSpeed, C.vd)
+                collecting = false
+            end)
+        end
+    end)
+    setStat("Farm Subterraneo ON — Y=" .. SUB_Y .. " | Velocidade "..farmSpeed, C.vd)
+end
+
+-- ============================================================
+-- BURACOS DO MAPA (CORRIGIDO COM ANTI-VOID)
+-- ============================================================
+local buraco_Y = -7
+local buraco_orig = nil
+local buracoConn = nil
+local noBuraco = false
+local antiVoidConn = nil
+
+local function initAntiVoid()
+    if antiVoidConn then antiVoidConn:Disconnect() end
+    antiVoidConn = RS.Stepped:Connect(function()
+        local h = getHRP()
+        if h and h.Position.Y < 0 then
+            h.CFrame = CFrame.new(h.Position.X, 5, h.Position.Z)
+            setStat("Anti-Void: evitando queda infinita!", C.am)
+        end
+    end)
+end
+
+local function irParaBuraco()
+    if noBuraco then setStat("Ja esta num buraco!", C.am); return end
+    local h = getHRP(); if not h then return end
+    buraco_orig = h.Position
+    local holePart = findObj({"hole", "gap", "void", "transition", "portal", "abyss", "lacuna"})
+    if holePart then
+        tpTo(getPos(holePart))
+        setStat("Teleportado para o buraco real!", C.vd)
+    else
+        local gapX = h.Position.X + 80
+        h.CFrame = CFrame.new(gapX, buraco_Y, h.Position.Z)
+        setStat("Teleporte alternativo para o buraco!", C.am)
+    end
+    noBuraco = true
+    initAntiVoid()
+    if buracoConn then buracoConn:Disconnect() end
+    buracoConn = RS.Stepped:Connect(function()
+        if not noBuraco then buracoConn:Disconnect(); buracoConn = nil; return end
+        local h2 = getHRP(); if not h2 then return end
+        if h2.Position.Y < buraco_Y - 2 or h2.Position.Y > buraco_Y + 3 then
+            pcall(function() h2.CFrame = CFrame.new(h2.Position.X, buraco_Y, h2.Position.Z) end)
+        end
+    end)
+    setStat("Dentro do buraco! Y=" .. buraco_Y .. " | Toque Sair Buraco para voltar", C.vd)
+end
+
+local function sairDoBuraco()
+    noBuraco = false
+    if buracoConn then buracoConn:Disconnect(); buracoConn = nil end
+    if antiVoidConn then antiVoidConn:Disconnect(); antiVoidConn = nil end
+    local h = getHRP()
+    if h then
+        if buraco_orig then h.CFrame = CFrame.new(buraco_orig.X, 5, buraco_orig.Z)
+        else h.CFrame = CFrame.new(h.Position.X, 5, h.Position.Z) end
+    end
+    buraco_orig = nil
+    setStat("Voltou para a superficie!", C.vd)
+end
+
+-- ============================================================
+-- METODOS DE PROTECAO (ANTI-HIT, BYPASS, SAFE ZONE, LAG GLITCH, FANTASMA)
+-- ============================================================
+local antiHitConn = nil
+local function fAntiHit(on)
+    if antiHitConn then antiHitConn:Disconnect(); antiHitConn = nil end
+    if not on then setStat("Anti-Hit OFF", C.vm); return end
+    local waveKws = {"tsunami","wave","flood","water","bunny","rabbit","tidal","surge","kill"}
+    local function removerHitbox()
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            for _, k in pairs(waveKws) do
+                if n:find(k) and o:IsA("BasePart") then
+                    pcall(function() o.CanCollide = false end)
+                end
+            end
+        end
+    end
+    removerHitbox()
+    antiHitConn = RS.Stepped:Connect(removerHitbox)
+    setStat("Anti-Hit ON — hitbox da onda removida!", C.vd)
+end
+
+local function fBypassDano(on)
+    if not on then setStat("Bypass Dano OFF", C.vm); return end
+    local count = 0
+    local function disable(char)
+        if not char then return end
+        for _, s in pairs(char:GetDescendants()) do
+            if (s:IsA("LocalScript") or s:IsA("Script")) then
+                local n = s.Name:lower()
+                if n:find("health") or n:find("damage") or n:find("hurt") then
+                    pcall(function() s.Disabled = true end); count = count + 1
+                end
+            end
+        end
+        pcall(function()
+            for _, s in pairs(game:GetService("StarterPlayer"):GetDescendants()) do
+                if (s:IsA("LocalScript") or s:IsA("Script")) and s.Name:lower():find("health") then
+                    s.Disabled = true; count = count + 1
+                end
+            end
+        end)
+    end
+    disable(getChar())
+    LP.CharacterAdded:Connect(function(nc) task.wait(0.3); disable(nc) end)
+    setStat("Bypass Dano ON — " .. count .. " scripts desativados!", C.vd)
+end
+
+local safeZoneConn = nil
+local safeZoneLocked = false
+local SAFE_Y = 120
+local function fSafeZone(on)
+    if safeZoneConn then safeZoneConn:Disconnect(); safeZoneConn = nil end
+    if not on then setStat("Safe Zone OFF", C.vm); return end
+    safeZoneConn = RS.Heartbeat:Connect(function()
+        local h = getHRP(); if not h or safeZoneLocked then return end
+        local wave = WS:FindFirstChild("Tsunami") or WS:FindFirstChild("Wave") or findObj({"tsunami","wave","flood","bunny"})
+        if wave then
+            local wp = wave:IsA("Model") and wave.PrimaryPart or (wave:IsA("BasePart") and wave)
+            if wp and wp:IsA("BasePart") and (h.Position - wp.Position).Magnitude < 180 then
+                safeZoneLocked = true
+                local orig = h.Position
+                h.CFrame = CFrame.new(orig.X, SAFE_Y, orig.Z)
+                task.delay(0.08, function()
+                    local h2 = getHRP()
+                    if h2 then h2.CFrame = CFrame.new(orig) end
+                    task.delay(0.3, function() safeZoneLocked = false end)
+                end)
+                setStat("Safe Zone: TP instantaneo!", C.am)
+            end
+        end
+    end)
+    setStat("Safe Zone ON — TP anti-tsunami ativo!", C.vd)
+end
+
+local lagConn = nil
+local frozenWaves = {}
+local function fLagGlitch(on)
+    if lagConn then lagConn:Disconnect(); lagConn = nil end
+    frozenWaves = {}
+    if not on then setStat("Lag Glitch OFF", C.vm); return end
+    lagConn = RS.Stepped:Connect(function()
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            if (n:find("tsunami") or n:find("wave") or n:find("flood")) and o:IsA("BasePart") then
+                if not frozenWaves[o] then frozenWaves[o] = o.CFrame end
+            end
+        end
+        for wave, cf in pairs(frozenWaves) do
+            if wave and wave.Parent then
+                pcall(function() wave.CFrame = cf; wave.CanCollide = false end)
+            else
+                frozenWaves[wave] = nil
+            end
+        end
+    end)
+    setStat("Lag Glitch ON — ondas congeladas!", C.vd)
+end
+
+local fantasmaConn = nil
+local function fFantasma(on)
+    if fantasmaConn then fantasmaConn:Disconnect(); fantasmaConn = nil end
+    if not on then
+        local c = getChar()
+        if c then
+            for _, p in pairs(c:GetDescendants()) do
+                if p:IsA("BasePart") then p.Transparency = 0; p.CanCollide = true end
+            end
+        end
+        setStat("Fantasma OFF", C.vm); return
+    end
+    fantasmaConn = RS.Stepped:Connect(function()
+        local c = getChar(); if not c then return end
+        local h = getHRP()
+        if h and h.Position.Y < 0 then pcall(function() h.CFrame = CFrame.new(h.Position.X, 2, h.Position.Z) end)
+        for _, p in pairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then
+                p.CanCollide = false
+                if p.Name ~= "HumanoidRootPart" then p.Transparency = 0.45 end
+            end
+        end
+    end)
+    setStat("Fantasma ON — ondas passam por voce!", C.vd)
+end
+
+-- ============================================================
+-- FLY + AUTO FARM (ORIGINAL)
+-- ============================================================
+local flyFarmConn = nil
+local FLY_HEIGHT = 35
+local function fFlyFarm(on)
+    if flyFarmConn then flyFarmConn:Disconnect(); flyFarmConn = nil end
+    if not on then
+        local h = getHRP()
+        if h then
+            local bv = h:FindFirstChild("WHFfBv"); if bv then bv:Destroy() end
+            local bg = h:FindFirstChild("WHFfBg"); if bg then bg:Destroy() end
+        end
+        local hm = getHum(); if hm then hm.PlatformStand = false end
+        setStat("Fly+Farm OFF", C.vm); return
+    end
+    local h = getHRP(); if not h then return end
+    local hm = getHum(); if hm then hm.PlatformStand = true end
+    local bg = Instance.new("BodyGyro", h)
+    bg.Name = "WHFfBg"; bg.MaxTorque = Vector3.new(9e9,9e9,9e9); bg.D = 100; bg.P = 1e5
+    local bv = Instance.new("BodyVelocity", h)
+    bv.Name = "WHFfBv"; bv.MaxForce = Vector3.new(9e9,9e9,9e9); bv.Velocity = Vector3.new()
+    task.delay(0.2, function()
+        local h2 = getHRP(); if h2 then h2.CFrame = CFrame.new(h2.Position.X, FLY_HEIGHT, h2.Position.Z) end
+    end)
+    local farmKws = {
+        "brainrot","common","uncommon","rare","epic","legendary","mythic",
+        "cosmic","secret","celestial","divine","infinity","paradox",
+        "phantom","orb","coin","shard","fish","ore","gem","crystal",
+        "egg","spring","golden","lucky","block","collect","pickup","drop"
+    }
+    flyFarmConn = RS.Stepped:Connect(function()
+        local h3 = getHRP(); if not h3 then return end
+        local bv2 = h3:FindFirstChild("WHFfBv")
+        if bv2 then
+            bv2.Velocity = h3.Position.Y < FLY_HEIGHT - 3 and Vector3.new(0, 40, 0) or Vector3.new(0, 0, 0)
+        end
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            for _, k in pairs(farmKws) do
+                if n:find(k) then
+                    local pos = getPos(o)
+                    if pos then
+                        local xzDist = Vector2.new(h3.Position.X - pos.X, h3.Position.Z - pos.Z).Magnitude
+                        if xzDist < 150 then
+                            h3.CFrame = CFrame.new(pos.X, FLY_HEIGHT, pos.Z)
+                            activateObj(o)
+                        end
+                    end; break
+                end
+            end
+        end
+    end)
+    setStat("Fly+Farm ON — voando em Y=" .. FLY_HEIGHT .. "!", C.vd)
+end
+
+-- ============================================================
+-- MONEY FARM (ORIGINAL)
+-- ============================================================
+local function fMoneyFarm(on)
+    stopLoop("mf"); if not on then setStat("Money Farm OFF", C.vm); return end
+    spawn(function()
+        while toggleStates["Money Farm"] do
+            local h = getHRP()
+            if h then
+                for _, o in pairs(WS:GetDescendants()) do
+                    local n = o.Name:lower()
+                    if n:find("orb") or n:find("coin") or n:find("money") or n:find("earn") or n:find("slot") or n:find("pad") or n:find("base") then
+                        local pos = getPos(o)
+                        if pos then
+                            local h2 = getHRP(); if not h2 then break end
+                            h2.CFrame = CFrame.new(pos.X, h2.Position.Y, pos.Z)
+                            task.wait(0.06); activateObj(o)
+                        end
+                    end
+                end
+            end
+            task.wait(1.5)
+        end
+    end)
+    setStat("Money Farm ON — percorrendo base!", C.vd)
+end
+
+-- ============================================================
+-- GHOST COLLECT (ORIGINAL)
+-- ============================================================
+local function ghostCollect(keyword, displayName, stateName)
+    spawn(function()
+        while toggleStates[stateName] do
+            local h = getHRP()
+            if h then
+                local found = {}
+                for _, o in pairs(WS:GetDescendants()) do
+                    if o.Name:lower():find(keyword) then
+                        local pos = getPos(o)
+                        if pos then found[#found + 1] = {o = o, p = pos} end
+                    end
+                end
+                if #found > 0 then
+                    setStat("Coletando: " .. displayName, C.am)
+                    for _, item in pairs(found) do
+                        if not toggleStates[stateName] then break end
+                        local h2 = getHRP(); if not h2 then break end
+                        h2.CFrame = CFrame.new(item.p + Vector3.new(0, 3, 0))
+                        task.wait(0.12); activateObj(item.o)
+                    end
+                    local base = findObj({"base","plot","spawn","homebase"})
+                    local bp = getPos(base)
+                    local h3 = getHRP()
+                    if h3 and bp then h3.CFrame = CFrame.new(bp + Vector3.new(0, 4, 0)) end
+                    setStat(displayName .. " coletado! Base.", C.vd)
+                else
+                    setStat("Procurando " .. displayName .. "...", C.txs)
+                end
+            end
+            task.wait(2.5)
+        end
+    end)
+end
+
+-- ============================================================
+-- PHANTOM EVENT (ORIGINAL)
+-- ============================================================
+local function fPhantomOrb(on)
+    stopLoop("porb"); if not on then return end
+    loops["porb"] = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            if n:find("phantom") and (n:find("orb") or n:find("orbe")) then
+                local pos = getPos(o)
+                if pos and (h.Position - pos).Magnitude < 200 then
+                    h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                    activateObj(o)
+                end
+            end
+        end
+    end)
+end
+local function fPhantomCoin(on)
+    stopLoop("pcoin"); if not on then return end
+    loops["pcoin"] = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            if n:find("phantom") and n:find("coin") then
+                local pos = getPos(o)
+                if pos and (h.Position - pos).Magnitude < 200 then
+                    h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                    activateObj(o)
+                end
+            end
+        end
+    end)
+end
+local function fPhantomShard(on)
+    stopLoop("pshard"); if not on then return end
+    loops["pshard"] = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            if n:find("phantom") and n:find("shard") then
+                local pos = getPos(o)
+                if pos and (h.Position - pos).Magnitude < 200 then
+                    h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                    activateObj(o)
+                end
+            end
+        end
+    end)
+end
+local function fPhantomSpin(on)
+    stopLoop("pspin"); if not on then return end
+    spawn(function()
+        while toggleStates["Auto Spin Phantom"] do
+            local cannon = findObj({"phantom.*cannon","phantomcannon","cannon"})
+            if cannon then
+                local pos = getPos(cannon)
+                if pos then
+                    local h = getHRP()
+                    if h then h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0)) end
+                    task.wait(0.2); activateObj(cannon)
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end
+
+-- ============================================================
+-- FISHING LTM (ORIGINAL)
+-- ============================================================
+local function fFishing(on)
+    stopLoop("fish"); if not on then return end
+    loops["fish"] = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            if n:find("fish") or n:find("pesca") or n:find("rod") or n:find("catch") or n:find("bait") then
+                local pos = getPos(o)
+                if pos and (h.Position - pos).Magnitude < 120 then
+                    h.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                    activateObj(o)
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- MINING EVENT (ORIGINAL)
+-- ============================================================
+local function fMining(on)
+    stopLoop("mine"); if not on then return end
+    spawn(function()
+        while toggleStates["Auto Mining"] do
+            local h = getHRP()
+            if h then
+                local best, bestDist = nil, 999
+                for _, o in pairs(WS:GetDescendants()) do
+                    local n = o.Name:lower()
+                    if n:find("rock") or n:find("ore") or n:find("gem") or n:find("mineral") or n:find("vein") then
+                        local pos = getPos(o)
+                        if pos then
+                            local d = (h.Position - pos).Magnitude
+                            if d < bestDist then bestDist = d; best = {o = o, p = pos} end
+                        end
+                    end
+                end
+                if best then
+                    h.CFrame = CFrame.new(best.p + Vector3.new(0, 3, 0))
+                    task.wait(0.15); activateObj(best.o)
+                    task.wait(0.3)
+                    for _, o in pairs(WS:GetDescendants()) do
+                        local n = o.Name:lower()
+                        if n:find("gem") or n:find("drop") or n:find("crystal") then
+                            local pos = getPos(o)
+                            if pos then
+                                local h2 = getHRP()
+                                if h2 then
+                                    h2.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                    activateObj(o)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+-- ============================================================
+-- CANCEL TSUNAMI (ORIGINAL)
+-- ============================================================
+local cancelTsConn = nil
+local function fCancelTs(on)
+    if cancelTsConn then cancelTsConn:Disconnect(); cancelTsConn = nil end
+    if not on then setStat("Cancel Tsunami OFF", C.vm); return end
+    local waveKws = {"tsunami","wave","flood","tidal","bunny","rabbit"}
+    local function removeWaves()
+        for _, o in pairs(WS:GetDescendants()) do
+            local n = o.Name:lower()
+            for _, k in pairs(waveKws) do
+                if n:find(k) then
+                    if o:IsA("BasePart") then
+                        pcall(function() o.CanCollide = false; o.Transparency = 1; o.CFrame = CFrame.new(0,-9999,0) end)
+                    elseif o:IsA("Model") then
+                        for _, p in pairs(o:GetDescendants()) do
+                            if p:IsA("BasePart") then
+                                pcall(function() p.CanCollide = false; p.Transparency = 1; p.CFrame = CFrame.new(0,-9999,0) end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    removeWaves()
+    cancelTsConn = RS.Stepped:Connect(removeWaves)
+    setStat("Tsunami CANCELADO — ondas removidas!", C.vd)
+end
+
+-- ============================================================
+-- AUTO ESCAPE (ORIGINAL)
+-- ============================================================
+local function fAutoEscape(on)
+    stopLoop("esc"); if not on then return end
+    loops["esc"] = RS.Stepped:Connect(function()
+        local h = getHRP(); if not h then return end
+        local wave = WS:FindFirstChild("Tsunami") or WS:FindFirstChild("Wave") or findObj({"tsunami","wave","flood","bunny"})
+        if wave then
+            local wp = wave:IsA("Model") and wave.PrimaryPart or (wave:IsA("BasePart") and wave)
+            if wp and wp:IsA("BasePart") and (h.Position - wp.Position).Magnitude < 240 then
+                local dir = (h.Position - wp.Position).Unit
+                h.CFrame = h.CFrame + (dir * 150)
+                setStat("Fugindo da onda!", C.vm)
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- FLY NORMAL (ORIGINAL)
+-- ============================================================
+local flyNormConn = nil
+local function stopFlyNorm()
+    if flyNormConn then flyNormConn:Disconnect(); flyNormConn = nil end
+    local h = getHRP()
+    if h then
+        local bg = h:FindFirstChild("WHBg"); if bg then bg:Destroy() end
+        local bv = h:FindFirstChild("WHBv"); if bv then bv:Destroy() end
+    end
+    local hm = getHum(); if hm then hm.PlatformStand = false end
+    local fu = SG:FindFirstChild("FlyUI"); if fu then fu:Destroy() end
+end
+local function fFlyNorm(on)
+    stopFlyNorm(); if not on then setStat("Fly OFF", C.vm); return end
+    local h = getHRP(); if not h then return end
+    local hm = getHum(); if hm then hm.PlatformStand = true end
+    local bg = Instance.new("BodyGyro", h); bg.Name = "WHBg"; bg.MaxTorque = Vector3.new(9e9,9e9,9e9); bg.D = 100; bg.P = 1e5
+    local bv = Instance.new("BodyVelocity", h); bv.Name = "WHBv"; bv.MaxForce = Vector3.new(9e9,9e9,9e9); bv.Velocity = Vector3.new()
+    local fu = Instance.new("Frame", SG); fu.Name = "FlyUI"; fu.Size = UDim2.new(0,190,0,108); fu.Position = UDim2.new(0.5,-95,1,-128); fu.BackgroundTransparency = 1; fu.ZIndex = 30
+    local held = {}
+    for _, d in pairs({{"Subir",0.37,0,Vector3.new(0,1,0)},{"Descer",0.37,0.65,Vector3.new(0,-1,0)},{"Esq",0,0.32,"left"},{"Dir",0.72,0.32,"right"},{"Frente",0.37,0.32,"front"}}) do
+        local b = Instance.new("TextButton",fu); b.Size=UDim2.new(0,54,0,30); b.Position=UDim2.new(d[2],0,d[3],0); b.BackgroundColor3=C.rx; b.Text=d[1]; b.TextColor3=C.br; b.TextSize=10; b.Font=Enum.Font.GothamBold; b.BorderSizePixel=0; b.ZIndex=31; cr(b,6)
+        b.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then held[d[1]]=d[4] end end)
+        b.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then held[d[1]]=nil end end)
+    end
+    local sb = Instance.new("TextButton",fu); sb.Size=UDim2.new(1,0,0,22); sb.Position=UDim2.new(0,0,1,-24); sb.BackgroundColor3=C.rx; sb.Text="PARAR FLY"; sb.TextColor3=C.br; sb.TextSize=10; sb.Font=Enum.Font.GothamBold; sb.BorderSizePixel=0; sb.ZIndex=31; cr(sb,5)
+    sb.MouseButton1Click:Connect(function() toggleStates["Fly"]=false; stopFlyNorm(); setStat("Fly OFF",C.vm) end)
+    flyNormConn = RS.Heartbeat:Connect(function()
+        local h2 = getHRP(); if not h2 then stopFlyNorm(); return end
+        local bv2 = h2:FindFirstChild("WHBv"); local bg2 = h2:FindFirstChild("WHBg"); if not bv2 or not bg2 then return end
+        local cam = WS.CurrentCamera; local dir = Vector3.new()
+        for _, v in pairs(held) do
+            if type(v) == "userdata" then dir = dir + v
+            elseif v == "front" then dir = dir + cam.CFrame.LookVector
+            elseif v == "left" then dir = dir - cam.CFrame.RightVector
+            elseif v == "right" then dir = dir + cam.CFrame.RightVector end
+        end
+        if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0,1,0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0,1,0) end
+        bv2.Velocity = dir.Magnitude > 0 and dir.Unit * 62 or Vector3.new()
+        bg2.CFrame = cam.CFrame
+    end)
+    setStat("Fly ON! Use botoes ou WASD", C.vd)
+end
+
+-- ============================================================
+-- FULLBRIGHT (ORIGINAL)
+-- ============================================================
+local function fFullBright(on)
+    if on then LT.Brightness=10; LT.ClockTime=14; LT.FogEnd=1e9; LT.GlobalShadows=false; LT.Ambient=Color3.fromRGB(255,255,255)
+    else LT.Brightness=2; LT.ClockTime=14; LT.FogEnd=100000; LT.GlobalShadows=true; LT.Ambient=Color3.fromRGB(100,100,100) end
+    setStat(on and "FullBright ON" or "FullBright OFF", on and C.vd or C.vm)
+end
+
+-- ============================================================
+-- NOCLIP (ORIGINAL)
+-- ============================================================
+local function fNoclip(on)
+    stopLoop("nc"); if not on then return end
+    loops["nc"] = RS.Stepped:Connect(function()
+        local c = getChar(); if not c then return end
+        for _, p in pairs(c:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end)
+end
+
+-- ============================================================
+-- INFINITE JUMP (ORIGINAL)
+-- ============================================================
+local function fInfJump(on)
+    stopLoop("ij"); if not on then return end
+    loops["ij"] = UIS.JumpRequest:Connect(function()
+        local hm = getHum(); if hm then hm:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end)
+end
+
+-- ============================================================
+-- ESP (ORIGINAL)
+-- ============================================================
+local function fESP(on)
+    if not on then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LP and p.Character then
+                local bb = p.Character:FindFirstChild("WHESP"); if bb then bb:Destroy() end
+            end
+        end; return
+    end
+    local function addESP(p)
+        if not p.Character then p.CharacterAdded:Wait() end
+        local c = p.Character; if not c then return end
+        local bb = Instance.new("BillboardGui", c); bb.Name="WHESP"; bb.Size=UDim2.new(0,100,0,26); bb.StudsOffset=Vector3.new(0,3,0); bb.AlwaysOnTop=true
+        local l = lbl(bb, p.Name, 10, C.dt, Enum.Font.GothamBold, 1)
+        l.Size=UDim2.new(1,0,1,0); l.BackgroundColor3=Color3.new(0,0,0); l.BackgroundTransparency=0.6; cr(l,4)
+    end
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LP then spawn(function() addESP(p) end) end
+    end
+end
+
+-- ============================================================
+-- ANTI-BAC (ORIGINAL)
+-- ============================================================
+local function startAntiBAC()
+    spawn(function()
+        while true do
+            task.wait(38 + math.random(1, 26))
+            if toggleStates["Anti-Deteccao"] then
+                local hm = getHum()
+                if hm and math.random(1, 3) == 1 then
+                    hm.Jump = true
+                    task.delay(0.06 + math.random() * 0.05, function()
+                        if hm then hm.Jump = false end
+                    end)
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- NOVAS FUNCOES DO EVENTO DA FOICE (JUNGLE EVENT)
+-- ============================================================
+
+-- Tabela de prioridade de raridades (conforme lista oficial de Abril 2026)[reference:1]
+-- Infinity (mais raro) > Divine > Celestial > Secret > Cosmic > Mythical > Legendary > Epic > Rare > Uncommon > Common
+local rarityPriority = {
+    ["infinity"] = 11,
+    ["divine"] = 10,
+    ["celestial"] = 9,
+    ["secret"] = 8,
+    ["cosmic"] = 7,
+    ["mythical"] = 6,
+    ["mythic"] = 6,
+    ["legendary"] = 5,
+    ["epic"] = 4,
+    ["rare"] = 3,
+    ["uncommon"] = 2,
+    ["common"] = 1,
+}
+
+-- Força Infinita para a Foice (versão otimizada)
+local function applyInfiniteScytheDamage()
+    local char = getChar()
+    if not char then return end
+    local tool = char:FindFirstChildWhichIsA("Tool")
+    if not tool then return end
+    
+    -- Tenta diferentes remotes para garantir o dano
+    local remote = RC:FindFirstChild("SwingAttack") or RC:FindFirstChild("CutGrass") or RC:FindFirstChild("Damage") or RC:FindFirstChild("DealDamage")
+    if remote then
+        for i = 1, 25 do
+            if not toggleStates["Forca Infinita Scythe"] then break end
+            remote:FireServer(tool, {damage = 9999999, hits = 99})
+            task.wait(0.01)
+        end
+    end
+    
+    -- Fallback: ativar prompt de corte
+    local grass = findObj({"grass", "blade", "bush", "weed", "vine"})
+    if grass then
+        activateObj(grass)
+    end
+end
+
+-- Auto Farm Scythe com prioridade por raridade e quebra de matos
+local function autoFarmScytheLoop()
+    while toggleStates["Auto Farm Scythe (Loop Completo)"] do
+        local hrp = getHRP()
+        if not hrp then task.wait(1) end
+        
+        -- 1. PROCURAR BRAINROTS RAROS (prioridade máxima)
+        local bestRarity = nil
+        local bestRarityScore = -1
+        local bestRarityPos = nil
+        local bestRarityObj = nil
+        
+        for _, item in pairs(WS:GetDescendants()) do
+            local n = item.Name:lower()
+            for rarity, score in pairs(rarityPriority) do
+                if n:find(rarity) and (n:find("brainrot") or n:find("collect") or n:find("pickup")) then
+                    local pos = getPos(item)
+                    if pos then
+                        local dist = (hrp.Position - pos).Magnitude
+                        if score > bestRarityScore then
+                            bestRarityScore = score
+                            bestRarity = rarity
+                            bestRarityPos = pos
+                            bestRarityObj = item
+                        elseif score == bestRarityScore and dist < (bestRarityPos and (hrp.Position - bestRarityPos).Magnitude or 999) then
+                            bestRarityPos = pos
+                            bestRarityObj = item
+                        end
+                    end
+                    break
+                end
+            end
+        end
+        
+        -- Se encontrou um Brainrot raro, vai até ele
+        if bestRarityObj and bestRarityPos then
+            setStat("Indo buscar: " .. string.upper(bestRarity) .. " Brainrot", C.am)
+            tpTo(bestRarityPos)
+            task.wait(0.1)
+            activateObj(bestRarityObj)
+            
+            -- Se houver matos bloqueando, corta rapidamente
+            local obstacles = findObj({"grass", "bush", "weed", "vine", "tall grass"})
+            if obstacles then
+                for i = 1, 10 do
+                    activateObj(obstacles)
+                    if toggleStates["Forca Infinita Scythe"] then
+                        applyInfiniteScytheDamage()
+                    end
+                    task.wait(0.05)
+                end
+            end
+            task.wait(0.3)
+            
+            -- Leva para a base
+            local base = findObj({"base", "delivery", "dropoff", "spawn"})
+            if base then
+                tpTo(getPos(base))
+                task.wait(0.3)
+                activateObj(base)
+                setStat(bestRarity:upper() .. " entregue na base!", C.vd)
+            end
+            task.wait(0.5)
+        end
+        
+        -- 2. CORTAR GRAMA E PEDRAS (abrir caminho)
+        local target = findObj({"grass", "blade", "bush", "weed", "vine", "tall grass", "rock", "stone", "pedra"})
+        if target then
+            local pos = getPos(target)
+            if pos then
+                tpTo(pos)
+                task.wait(0.05)
+                activateObj(target)
+                if toggleStates["Forca Infinita Scythe"] then
+                    applyInfiniteScytheDamage()
+                end
+                task.wait(0.05)
+            end
+        end
+        
+        -- 3. COLETAR ITENS COMUNS (prioridade baixa)
+        for _, item in pairs(WS:GetDescendants()) do
+            local n = item.Name:lower()
+            if (n:find("brainrot") or n:find("coin") or n:find("token") or n:find("shard")) then
+                local isRare = false
+                for rarity in pairs(rarityPriority) do
+                    if n:find(rarity) and rarity ~= "common" and rarity ~= "uncommon" then
+                        isRare = true
+                        break
+                    end
+                end
+                if not isRare then
+                    local pos = getPos(item)
+                    if pos and (hrp.Position - pos).Magnitude < 80 then
+                        tpTo(pos)
+                        activateObj(item)
+                        task.wait(0.05)
+                    end
+                end
+            end
+        end
+        
+        -- 4. UPGRADES DA FOICE
+        local upgrade = findObj({"upgrade", "shop", "store", "anvil", "smith"})
+        if upgrade and toggleStates["Auto Upgrade Scythe"] then
+            tpTo(getPos(upgrade))
+            task.wait(0.3)
+            for _, btn in pairs(upgrade:GetDescendants()) do
+                if btn:IsA("TextButton") and (btn.Name:lower():find("damage") or btn.Name:lower():find("speed") or btn.Name:lower():find("purchase") or btn.Name:lower():find("buy")) then
+                    fireclickdetector(btn)
+                    task.wait(0.1)
+                end
+            end
+        end
+        
+        -- 5. REBIRTH
+        local rebirth = findObj({"rebirth", "prestige", "reset", "reincarnate"})
+        if rebirth and toggleStates["Auto Rebirth"] then
+            local text = rebirth:FindFirstChild("TextLabel")
+            if text and text.Text:lower():find("available") then
+                tpTo(getPos(rebirth))
+                task.wait(0.3)
+                activateObj(rebirth)
+                setStat("Rebirth realizado! Foice mais poderosa!", C.am)
+                task.wait(3)
+            end
+        end
+        
+        task.wait(0.2)
+    end
+end
+
+-- Auto Cut Grass (apenas cortar matos e coletar itens comuns)
+local function autoCutGrass()
+    while toggleStates["Auto Cut Grass (Coletar)"] do
+        local hrp = getHRP()
+        if not hrp then task.wait(1) end
+        
+        local grass = findObj({"grass", "blade", "bush", "weed", "vine", "tall grass"})
+        if grass then
+            local pos = getPos(grass)
+            if pos and (hrp.Position - pos).Magnitude < 60 then
+                tpTo(pos)
+                task.wait(0.05)
+                activateObj(grass)
+                if toggleStates["Forca Infinita Scythe"] then
+                    applyInfiniteScytheDamage()
+                end
+                task.wait(0.05)
+            end
+        end
+        
+        for _, item in pairs(WS:GetDescendants()) do
+            local n = item.Name:lower()
+            if n:find("brainrot") or n:find("coin") or n:find("token") then
+                local pos = getPos(item)
+                if pos and (hrp.Position - pos).Magnitude < 50 then
+                    tpTo(pos)
+                    activateObj(item)
+                    task.wait(0.05)
+                end
+            end
+        end
+        
+        task.wait(0.15)
+    end
+end
+
+-- Auto Upgrade Scythe
+local function autoUpgradeScythe()
+    while toggleStates["Auto Upgrade Scythe"] do
+        local upgrade = findObj({"upgrade", "shop", "store", "anvil", "smith"})
+        if upgrade then
+            tpTo(getPos(upgrade))
+            task.wait(0.3)
+            for _, btn in pairs(upgrade:GetDescendants()) do
+                if btn:IsA("TextButton") and (btn.Name:lower():find("damage") or btn.Name:lower():find("speed") or btn.Name:lower():find("purchase") or btn.Name:lower():find("buy")) then
+                    fireclickdetector(btn)
+                    task.wait(0.1)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end
+
+-- Auto Rebirth
+local function autoRebirth()
+    while toggleStates["Auto Rebirth"] do
+        local rebirth = findObj({"rebirth", "prestige", "reset", "reincarnate"})
+        if rebirth then
+            local text = rebirth:FindFirstChild("TextLabel")
+            if text and text.Text:lower():find("available") then
+                tpTo(getPos(rebirth))
+                task.wait(0.3)
+                activateObj(rebirth)
+                setStat("Auto Rebirth ativado! Foice renascida!", C.am)
+                task.wait(3)
+            end
+        end
+        task.wait(4)
+    end
+end
+
+-- Teleporte para o Evento da Foice (Selva)
+local function irParaEventoScythe()
+    local portal = findObj({"grass", "field", "lobby", "jungle", "forest", "selva", "cut"}) or findObj({"scythe", "event"})
+    if portal then
+        tpTo(getPos(portal))
+        setStat("Teleportado para a selva do evento da foice!", C.vd)
+    else
+        setStat("Evento da foice nao encontrado. Entre no jogo primeiro.", C.vm)
+    end
+end
+
+-- ============================================================
+-- FUNCOES DO CARNIVAL UPDATE (BASEADAS EM PESQUISA OFICIAL)
+-- ============================================================
+-- Fonte: Carnival Machine Guide - roonby.com[reference:2]
+-- A Carnival Machine permite combinar Brainrots para aplicar mutações, duplicar, 
+-- aumentar nível e obter a rara Showtime Mutation[reference:3]
+-- O minigame de circles afeta a qualidade das recompensas[reference:4]
+
+-- Auto Carnival Machine (executa o minigame automaticamente)
+local function autoCarnivalMachine()
+    while toggleStates["Auto Carnival Machine"] do
+        local machine = findObj({"CarnivalMachine", "Carnival Machine", "PrizeMachine", "Carnival", "Machine"})
+        if machine then
+            tpTo(getPos(machine))
+            task.wait(0.3)
+            activateObj(machine)
+            
+            -- Simula o minigame de circles com timing perfeito
+            if toggleStates["Auto Carnival Machine Full Auto"] then
+                for i = 1, 8 do
+                    pcall(function()
+                        VIM:SendMouseButtonEvent(1, 500 + math.random(50, 400), 300 + math.random(50, 200), true, game, 0)
+                        task.wait(math.random(1, 3) / 20)
+                        VIM:SendMouseButtonEvent(1, 500 + math.random(50, 400), 300 + math.random(50, 200), false, game, 0)
+                    end)
+                    task.wait(math.random(3, 7) / 10)
+                end
+                setStat("Minigame Carnival executado! Possivel Showtime Mutation.", C.am)
+            end
+            task.wait(2)
+        else
+            task.wait(5)
+        end
+    end
+end
+
+-- Auto Dupe System (baseado em pesquisa de eventos UFO, Money, Arcade)
+-- Fonte: Dupe guide rutab.net[reference:5], Portal do Pixel[reference:6]
+-- Durante eventos UFO, Money ou Arcade, maquinas especiais permitem duplicar Brainrots[reference:7]
+-- Para aumentar chances, server luck deve estar alta[reference:8]
+local function autoDupeSystem()
+    while toggleStates["Auto Dupe System"] do
+        -- Procura máquinas de duplicação de eventos (UFO, Money, Arcade)
+        local dupeMachine = findObj({"SpawnMachine", "UFOMachine", "MoneyMachine", "ArcadeMachine", "DupeMachine", "CraftMachine", "BlackHole", "ATM", "SlotMachine"})
+        if dupeMachine then
+            tpTo(getPos(dupeMachine))
+            task.wait(0.5)
+            activateObj(dupeMachine)
+            task.wait(0.3)
+            
+            -- Procura botoes de deposito e craft
+            for _, btn in pairs(dupeMachine.Parent:GetDescendants()) do
+                if btn:IsA("TextButton") then
+                    local txt = btn.Text:lower()
+                    if txt:find("deposit") or txt:find("add") or txt:find("insert") then
+                        fireclickdetector(btn)
+                        task.wait(0.2)
+                    elseif txt:find("craft") or txt:find("confirm") or txt:find("duplicate") or txt:find("dupe") then
+                        fireclickdetector(btn)
+                        task.wait(0.5)
+                        setStat("Tentativa de duplicacao realizada!", C.vd)
+                    end
+                end
+            end
+        end
+        task.wait(3)
+    end
+end
+
+-- Auto Coleta de Event Coins (Carnival)
+local function autoCollectEventCoins()
+    while toggleStates["Auto Collect Event Coins"] do
+        local hrp = getHRP()
+        if not hrp then task.wait(1) end
+        
+        for _, coin in pairs(WS:GetDescendants()) do
+            local n = coin.Name:lower()
+            if n:find("coin") or n:find("carnival") or n:find("eventcoin") or n:find("token") then
+                local pos = getPos(coin)
+                if pos and (hrp.Position - pos).Magnitude < 80 then
+                    tpTo(pos)
+                    activateObj(coin)
+                    task.wait(0.05)
+                end
+            end
+        end
+        task.wait(1)
+    end
+end
+
+-- Auto Spin Carnival Wheel
+local function autoSpinCarnivalWheel()
+    while toggleStates["Auto Spin Carnival Wheel"] do
+        local wheel = findObj({"wheel", "spinner", "roulette", "roleta", "carnivalwheel", "prizewheel"})
+        if wheel then
+            tpTo(getPos(wheel))
+            task.wait(0.3)
+            activateObj(wheel)
+            setStat("Girando a roda do Carnival!", C.am)
+            task.wait(3)
+        else
+            task.wait(5)
+        end
+    end
+end
+
+-- ============================================================
+-- MONTAGEM DO MENU (TODAS AS PAGINAS)
+-- ============================================================
+
+-- PAGINA: PROTECAO
+addSideBtn("Protecao", "[G]")
+pages["Protecao"] = {}; curPage = "Protecao"
+addSection("Metodo 1 — Anti-Hit")
+addToggle("Anti-Hit", "Remove hitbox da onda.", fAntiHit)
+addSection("Metodo 2 — Bypass de Dano")
+addToggle("Bypass Dano", "Desativa scripts de dano.", fBypassDano)
+addSection("Metodo 3 — Safe Zone TP")
+addToggle("Safe Zone TP", "Teleporta antes da tsunami.", fSafeZone)
+addSection("Metodo 4 — Lag Glitch")
+addToggle("Lag Glitch", "Congela ondas localmente.", fLagGlitch)
+addSection("Extras")
+addToggle("Modo Fantasma", "Atravessa ondas.", fFantasma)
+addToggle("Cancel Tsunami", "Remove ondas do mapa.", fCancelTs)
+addToggle("Auto Escape", "Foge da onda.", fAutoEscape)
+addSection("Anti-Deteccao")
+addToggle("Anti-Deteccao", "Simula inputs humanos.", function(on) toggleStates["Anti-Deteccao"] = on end)
+addToggle("Anti AFK", "Evita ser expulso.", function(on)
+    stopLoop("afk"); if not on then return end
+    spawn(function()
+        while toggleStates["Anti AFK"] do
+            local hm = getHum()
+            if hm then hm.Jump = true; task.delay(0.1, function() if hm then hm.Jump = false end end) end
+            task.wait(50)
+        end
+    end)
+end)
+addButton("Resetar Speed", "Velocidade 16 / Pulo 50.", function()
+    local h = getHum()
+    if h then h.WalkSpeed = 16; h.JumpPower = 50 end
+end)
+
+-- PAGINA: PHANTOM EVENT
+addSideBtn("Phantom", "[PH]")
+pages["Phantom"] = {}; curPage = "Phantom"
+addSection("Phantom Event")
+addToggle("Auto Phantom Orb", "Coleta orbs.", fPhantomOrb)
+addToggle("Auto Phantom Coin", "Coleta coins.", fPhantomCoin)
+addToggle("Auto Phantom Shard", "Coleta shards.", fPhantomShard)
+addToggle("Auto Spin Phantom", "Gira canhao.", fPhantomSpin)
+addSection("Teleportes")
+addButton("Ir Ghost Ship", "", function() local o=findObj({"ghost.*ship","ship"}) if o then tpTo(getPos(o)) end end)
+addButton("Ir Phantom Cannon", "", function() local o=findObj({"phantom.*cannon","cannon"}) if o then tpTo(getPos(o)) end end)
+addButton("Ir Phantom Converter", "", function() local o=findObj({"phantom.*converter","converter"}) if o then tpTo(getPos(o)) end end)
+addButton("Ir Phantom Summoner", "", function() local o=findObj({"phantom.*summoner","summoner"}) if o then tpTo(getPos(o)) end end)
+
+-- PAGINA: FLY FARM
+addSideBtn("FlyFarm", "[FF]")
+pages["FlyFarm"] = {}; curPage = "FlyFarm"
+addSection("Fly+Farm")
+addToggle("Fly + Coletar", "Voa e coleta.", fFlyFarm)
+addToggle("Money Farm", "Coleta coins da base.", fMoneyFarm)
+addSection("Fishing LTM")
+addToggle("Auto Fishing", "Pesca automaticamente.", fFishing)
+addButton("Ir Fishing Portal", "", function() local o=findObj({"fishing","ltm","portal"}) if o then tpTo(getPos(o)) end end)
+addSection("Mining Event")
+addToggle("Auto Mining", "Minera rochas.", fMining)
+addButton("Ir Zona Mining", "", function() local o=findObj({"mine","mining","cave"}) if o then tpTo(getPos(o)) end end)
+addButton("Pegar Picareta", "", function() local o=findObj({"pickaxe","picareta","hammer"}) if o then tpTo(getPos(o)); task.wait(0.3); activateObj(o) end end)
+addSection("Admin Abuse")
+addButton("Detectar Evento", "", function() local o=findObj({"event","admin","abuse"}) if o then tpTo(getPos(o)) end end)
+
+-- PAGINA: FARM SUBTERRANEO
+addSideBtn("SubFarm", "[SF]")
+pages["SubFarm"] = {}; curPage = "SubFarm"
+addSection("Farm Subterraneo")
+addToggle("Farm Subterraneo", "Fica em Y=-7.", fSubFarm)
+addSection("Velocidade")
+addButton("Velocidade 1 (Lenta)", "", function() farmSpeed = 1 end)
+addButton("Velocidade 2 (Normal)", "", function() farmSpeed = 2 end)
+addButton("Velocidade 3 (Rapida)", "", function() farmSpeed = 3 end)
+addButton("Velocidade 4 (Muito Rapida)", "", function() farmSpeed = 4 end)
+addButton("Velocidade 5 (Maxima)", "", function() farmSpeed = 5 end)
+addSection("Buracos")
+addButton("Ir para Buraco", "", irParaBuraco)
+addButton("Sair do Buraco", "", sairDoBuraco)
+
+-- PAGINA: BRAINROTS (11 RARIDADES OFICIAIS)
+addSideBtn("Brainrots", "[B]")
+pages["Brainrots"] = {}; curPage = "Brainrots"
+addSection("11 Raridades (Lista Oficial Abril 2026)")
+addToggle("Infinity", "Raridade maxima", function(on) if on then ghostCollect("infinity", "Infinity", "Infinity") end end)
+addToggle("Divine", "Divino", function(on) if on then ghostCollect("divine", "Divine", "Divine") end end)
+addToggle("Celestial", "Celestial", function(on) if on then ghostCollect("celestial", "Celestial", "Celestial") end end)
+addToggle("Secret", "Secreto", function(on) if on then ghostCollect("secret", "Secret", "Secret") end end)
+addToggle("Cosmic", "Cosmico", function(on) if on then ghostCollect("cosmic", "Cosmic", "Cosmic") end end)
+addToggle("Mythical", "Mitico", function(on) if on then ghostCollect("mythical", "Mythical", "Mythical") end end)
+addToggle("Legendary", "Lendario", function(on) if on then ghostCollect("legendary", "Legendary", "Legendary") end end)
+addToggle("Epic", "Epico", function(on) if on then ghostCollect("epic", "Epic", "Epic") end end)
+addToggle("Rare", "Raro", function(on) if on then ghostCollect("rare", "Rare", "Rare") end end)
+addToggle("Uncommon", "Incomum", function(on) if on then ghostCollect("uncommon", "Uncommon", "Uncommon") end end)
+addToggle("Common", "Comum", function(on) if on then ghostCollect("common", "Common", "Common") end end)
+
+-- PAGINA: VOO
+addSideBtn("Voo", "[F]")
+pages["Voo"] = {}; curPage = "Voo"
+addSection("Voo e Movimento")
+addToggle("Fly", "Voa livremente.", fFlyNorm)
+addToggle("Noclip", "Atravessa paredes.", fNoclip)
+addToggle("Infinite Jump", "Pulo infinito.", fInfJump)
+addSection("Velocidade")
+addButton("Speed x2", "", function() local h=getHum() if h then h.WalkSpeed=36 end end)
+addButton("Speed x3", "", function() local h=getHum() if h then h.WalkSpeed=54 end end)
+addButton("Speed Normal", "", function() local h=getHum() if h then h.WalkSpeed=16 end end)
+addButton("Jump Boost", "", function() local h=getHum() if h then h.JumpPower=100; h.UseJumpPower=true end end)
+
+-- PAGINA: AREAS
+addSideBtn("Areas", "[TP]")
+pages["Areas"] = {}; curPage = "Areas"
+addSection("Zonas do Mapa")
+addButton("Grasslands", "", function() local o=findObj({"grassland","grass"}) if o then tpTo(getPos(o)) end end)
+addButton("Sandy Zone", "", function() local o=findObj({"sandy","sand"}) if o then tpTo(getPos(o)) end end)
+addButton("Snow Zone", "", function() local o=findObj({"snow","ice"}) if o then tpTo(getPos(o)) end end)
+addButton("Lava Zone", "", function() local o=findObj({"lava","volcano"}) if o then tpTo(getPos(o)) end end)
+addButton("Void Zone", "", function() local o=findObj({"void","dark"}) if o then tpTo(getPos(o)) end end)
+addButton("Secret Zone", "", function() local o=findObj({"secret","hidden"}) if o then tpTo(getPos(o)) end end)
+addButton("Celestial Zone", "", function() local o=findObj({"celestial","angel"}) if o then tpTo(getPos(o)) end end)
+addButton("Paradox Zone", "", function() local o=findObj({"paradox","endgame"}) if o then tpTo(getPos(o)) end end)
+addButton("Trading Plaza", "", function() local o=findObj({"trading","trade"}) if o then tpTo(getPos(o)) end end)
+addButton("Tsunami Tower", "", function() local o=findObj({"tower","tsunamitower"}) if o then tpTo(getPos(o)) end end)
+addButton("Spawn / Base", "", function() local o=findObj({"spawn","start","base"}) if o then tpTo(getPos(o)) end end)
+addButton("Ghost Ship", "", function() local o=findObj({"ghost.*ship","ship"}) if o then tpTo(getPos(o)) end end)
+
+-- PAGINA: VISUAL
+addSideBtn("Visual", "[V]")
+pages["Visual"] = {}; curPage = "Visual"
+addSection("ESP e Visual")
+addToggle("Player ESP", "Mostra jogadores.", fESP)
+addToggle("FullBright", "Clareia tudo.", fFullBright)
+addToggle("Remover Neblina", "Remove neblina.", function(on) LT.FogEnd = on and 1e9 or 100000 end)
+addButton("Server Hop", "Troca de servidor.", function() pcall(function() TP:Teleport(game.PlaceId, LP) end) end)
+addButton("Rejoin", "Reconecta.", function() pcall(function() TP:Teleport(game.PlaceId, LP) end) end)
+
+-- PAGINA: DISCORD
+addSideBtn("Discord", "[WH]")
+pages["Discord"] = {}; curPage = "Discord"
+addSection("Info")
+addButton("Copiar Discord", "Copia o link.", function() pcall(function() setclipboard("https://" .. DISC) end) end)
+
+-- ============================================================
+-- PAGINA: EVENTO SCYTHE (FOICE - COMPLETO)
+-- ============================================================
+addSideBtn("Evento Scythe", "[S]")
+pages["Evento Scythe"] = {}; curPage = "Evento Scythe"
+
+addSection("PODER INFINITO")
+addToggle("Forca Infinita Scythe", "Sua foice corta qualquer grama com um golpe!", function(on)
+    toggleStates["Forca Infinita Scythe"] = on
+end)
+
+addSection("AUTO FARM COMPLETO")
+addToggle("Auto Farm Scythe (Loop Completo)", "Corta, coleta, entrega, faz upgrade e rebirth.", function(on)
+    stopLoop("autoFarmScythe")
+    if on then
+        loops["autoFarmScythe"] = RS.Stepped:Connect(autoFarmScytheLoop)
+    end
+end)
+addToggle("Auto Cut Grass (Coletar)", "Apenas corta grama e coleta Brainrots.", function(on)
+    stopLoop("autoCutGrass")
+    if on then
+        loops["autoCutGrass"] = RS.Stepped:Connect(autoCutGrass)
+    end
+end)
+
+addSection("UPGRADES E REBIRTH")
+addToggle("Auto Upgrade Scythe", "Compra upgrades de dano e velocidade.", function(on)
+    stopLoop("autoUpgrade")
+    if on then
+        loops["autoUpgrade"] = RS.Stepped:Connect(autoUpgradeScythe)
+    end
+end)
+addToggle("Auto Rebirth", "Faz renascimento automaticamente.", function(on)
+    stopLoop("autoRebirth")
+    if on then
+        loops["autoRebirth"] = RS.Stepped:Connect(autoRebirth)
+    end
+end)
+
+addSection("TELEPORTES")
+addButton("Ir para Evento Scythe", "Teleporta para a selva.", irParaEventoScythe)
+
+-- ============================================================
+-- PAGINA: CARNIVAL UPDATE (MINIGAMES E MUTACOES)
+-- ============================================================
+addSideBtn("Carnival", "[C]")
+pages["Carnival"] = {}; curPage = "Carnival"
+
+addSection("Carnival Machine - Baseado no guia oficial Roonby")
+addToggle("Auto Carnival Machine", "Usa a maquina do evento Carnival.", function(on)
+    stopLoop("autoCarnival")
+    if on then
+        loops["autoCarnival"] = RS.Stepped:Connect(autoCarnivalMachine)
+    end
+end)
+addToggle("Auto Carnival Machine Full Auto", "Executa o minigame de circles com timing perfeito.", function(on)
+    toggleStates["Auto Carnival Machine Full Auto"] = on
+end)
+
+addSection("Dupe System - Durante eventos UFO, Money ou Arcade[reference:9]")
+addToggle("Auto Dupe System", "Duplica Brainrots durante eventos especiais.", function(on)
+    stopLoop("autoDupe")
+    if on then
+        loops["autoDupe"] = RS.Stepped:Connect(autoDupeSystem)
+    end
+end)
+
+addSection("Coleta de Eventos Carnival")
+addToggle("Auto Collect Event Coins", "Coleta moedas do evento Carnival.", function(on)
+    stopLoop("autoCoins")
+    if on then
+        loops["autoCoins"] = RS.Stepped:Connect(autoCollectEventCoins)
+    end
+end)
+addToggle("Auto Spin Carnival Wheel", "Gira a roda do Carnival.", function(on)
+    stopLoop("autoWheel")
+    if on then
+        loops["autoWheel"] = RS.Stepped:Connect(autoSpinCarnivalWheel)
+    end
+end)
+
+addSection("Teleportes")
+addButton("Ir Carnival Machine", "Vai para a maquina.", function()
+    local o = findObj({"CarnivalMachine", "Carnival"})
+    if o then tpTo(getPos(o)) else setStat("Carnival Machine nao encontrada", C.vm) end
+end)
+
+-- ============================================================
+-- FINALIZACAO E VERIFICACAO DE KEY
+-- ============================================================
+FBTN.MouseButton1Click:Connect(function()
+    if fabMoved then return end
+    menuOpen = not menuOpen
+    Menu.Visible = menuOpen
+    if menuOpen then
+        local fp = FAB.AbsolutePosition
+        local ss = SG.AbsoluteSize
+        local mx = fp.X + 56
+        local my = fp.Y - 10
+        if mx + 370 > ss.X then mx = fp.X - 376 end
+        if my + 420 > ss.Y then my = ss.Y - 430 end
+        if my < 0 then my = 4 end
+        Menu.Position = UDim2.new(0, mx, 0, my)
+        showPage("Protecao")
+        local fb = sideButtons["Protecao"]
+        if fb then
+            local ind = fb:FindFirstChildOfClass("Frame")
+            if ind then ind.Visible = true end
+        end
+    end
+end)
+
+local function verifyKey()
+    local key = kBox.Text:gsub("%s", "")
+    if key == KEY then
+        kMsg.Text = "Key correta! Acesso liberado."
+        kMsg.TextColor3 = C.vd
+        task.wait(0.7)
+        TS:Create(KBG, TweenInfo.new(0.45), {BackgroundTransparency = 1}):Play()
+        for _, v in pairs(KBG:GetDescendants()) do
+            if v:IsA("GuiObject") then
+                TS:Create(v, TweenInfo.new(0.35), {BackgroundTransparency = 1}):Play()
+                if v:IsA("TextLabel") or v:IsA("TextButton") or v:IsA("TextBox") then
+                    TS:Create(v, TweenInfo.new(0.35), {TextTransparency = 1}):Play()
+                end
+            end
+        end
+        task.wait(0.4)
+        KBG.Visible = false
+        FAB.Visible = true
+        setStat("Toque em W para abrir o menu! | WIDER HUB v14.0", C.vd)
+        startAntiBAC()
+    else
+        kMsg.Text = "Key incorreta! Acesso negado."
+        kMsg.TextColor3 = C.vm
+        local orig = KP.Position
+        for _ = 1, 4 do
+            KP.Position = UDim2.new(orig.X.Scale, orig.X.Offset + 8, orig.Y.Scale, orig.Y.Offset)
+            task.wait(0.05)
+            KP.Position = UDim2.new(orig.X.Scale, orig.X.Offset - 8, orig.Y.Scale, orig.Y.Offset)
+            task.wait(0.05)
+        end
+        KP.Position = orig
+    end
+end
+
+kConfBtn.MouseButton1Click:Connect(verifyKey)
+kBox.FocusLost:Connect(function(entered)
+    if entered then verifyKey() end
+end)
+
+showPage("Protecao")
+print("WIDER HUB " .. VER .. " | 01/05/2026 | Carregado com todas as funcoes e novidades v14.0!")
